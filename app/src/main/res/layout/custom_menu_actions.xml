@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp">
+
+    <ImageView
+        android:id="@+id/add_agent_button"
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_weight="1"
+        android:src="@drawable/person_add_24"
+        android:background="#4CAF50"
+        android:padding="6dp"
+        android:layout_marginEnd="4dp"
+        android:contentDescription="Add Agent" />
+
+    <ImageView
+        android:id="@+id/delete_agent_button"
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_weight="1"
+        android:src="@drawable/person_remove_24"
+        android:background="#F44336"
+        android:padding="6dp"
+        android:layout_marginStart="4dp"
+        android:contentDescription="Delete Agent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

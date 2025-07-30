@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- صلاحية الرسم فوق التطبيقات الأخرى للآلة الحاسبة العائمة -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- ## الإضافات الجديدة المطلوبة للتحديث ## -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- ## نهاية الإضافات الجديدة ## -->
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="ExchangeNew"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar"
+        tools:targetApi="31">
+
+        <!-- النشاط الرئيسي -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- نشاط السجلات -->
+        <activity
+            android:name=".RecordsActivity"
+            android:label="سجلات المعاملات"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- نشاط الرسم البياني -->
+        <activity
+            android:name=".ChartActivity"
+            android:label="ملخص الرسوم البيانية"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- خدمة الآلة الحاسبة العائمة -->
+        <service
+            android:name=".FloatingViewService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- ## الإضافة الجديدة المطلوبة للتحديث (Provider) ## -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        <!-- ## نهاية الإضافة الجديدة ## -->
+
+    </application>
+
+</manifest>
