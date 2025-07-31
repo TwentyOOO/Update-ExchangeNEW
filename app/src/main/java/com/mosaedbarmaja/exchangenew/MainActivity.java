@@ -47,12 +47,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -68,8 +66,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// ## تم حذف الاعتماد على BuildConfig بشكل كامل ##
-
 public class MainActivity extends Activity {
 
     // --- Constants ---
@@ -77,12 +73,18 @@ public class MainActivity extends Activity {
     public static final String RECORDS_PREFS_KEY = "transaction_records";
     public static final String AGENTS_PREFS_KEY = "shipping_agents";
     public static final String OWNER_KEY_MAIN_WALLET = "MAIN_WALLET";
+    private static final String KEY_SELECTED_AGENT = "selected_agent";
+    private static final String KEY_CURRENT_YOHO_INDEX = "current_yoho_index";
+    private static final String KEY_COMMISSION_INDEX = "commission_index";
+    private boolean isActivityActive = false;
     private static final int CODE_DRAW_OVER_OTHER_APP_PERMISSION = 2084;
     private static final Object ACTION_ITEM_MARKER = new Object();
+    private boolean isQuickCalculatorEnabled = false;
 
     private final double AED_TO_USDT_RATE = 1 / 3.8;
     private final double USDT_TO_AED_RATE = 3.8 / 1;
-    private final double CUSTOM_SALE_BASE_RATE = 265000.0;
+    private final double CUSTOM_SALE_BASE_RATE_265 = 265000.0;
+    private final double CUSTOM_SALE_BASE_RATE_260 = 260000.0;
 
     // !! مهم: تأكد من استبدال "TwentyOOO" و "Update-ExchangeNEW" بمعلوماتك الصحيحة
     private static final String UPDATE_JSON_URL = "https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/update.json";
@@ -95,7 +97,10 @@ public class MainActivity extends Activity {
     private LinearLayout agentWalletLayout;
     private Button agentCommissionButton, addBtn, subBtn;
     private ImageView usdtIconView;
-    private ListPopupWindow listPopupWindow;
+    // --- تم تعديل تعريف النوافذ المنبثقة ---
+    private ListPopupWindow agentListPopupWindow;
+    private ListPopupWindow yohoPricePopupWindow;
+    private ListPopupWindow agentCommissionPopupWindow;
 
 
     // --- Data & State ---
@@ -106,9 +111,9 @@ public class MainActivity extends Activity {
     private final String[] yohoNames = {"التسعيرة الاولى", "التسعيرة الثانية", "التسعيرة الثالثة", "التسعيرة الرابعة"};
     private int currentYohoIndex = 0;
 
-    private final double[] agentCommissionPrices = {250000, 255000, 260000, 265000, 0};
-    private final double[] agentCommissionValues = {15000, 10000, 5000, 0, 0};
-    private final String[] agentCommissionNames = {"عمولة 6%", "عمولة 4%", "عمولة 2%", "تسعرة جماعية 6%", "تسعرة مخصصة 6%"};
+    private final double[] agentCommissionPrices = {250000, 250000, 250000, 265000, 0, 0};
+    private final double[] agentCommissionValues = {15000, 10000, 5000, 0, 0, 0};
+    private final String[] agentCommissionNames = {"تسعيرة 265", "تسعيرة 260", "تسعيرة 255", "تسعيرة جماعية 265", "تسعيرة مخصصة 265", "تسعيرة مخصصة 260"};
     private int currentAgentCommissionIndex = -1;
 
     private boolean isUpdating = false;
@@ -116,6 +121,7 @@ public class MainActivity extends Activity {
     private boolean isTransferToMemberMode = false;
     private boolean isCustomGroupSaleActive = false;
     private boolean isCustomCommissionSale = false;
+    private double currentCustomRate = CUSTOM_SALE_BASE_RATE_265;
     private final List<double[]> customMemberSales = new ArrayList<>();
     private boolean isAgentSaleMode = true;
 
@@ -157,6 +163,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        isActivityActive = true;
         updateWalletDisplay();
         updateAgentBalanceDisplay();
 
@@ -170,8 +177,43 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        isActivityActive = false;
+        dismissAllPopups();
         super.onPause();
         unregisterReceiver(updateReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        cleanupPopupWindows();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(KEY_SELECTED_AGENT, selectedMainAgentName);
+        outState.putInt(KEY_CURRENT_YOHO_INDEX, currentYohoIndex);
+        outState.putInt(KEY_COMMISSION_INDEX, currentAgentCommissionIndex);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            selectedMainAgentName = savedInstanceState.getString(KEY_SELECTED_AGENT);
+            currentYohoIndex = savedInstanceState.getInt(KEY_CURRENT_YOHO_INDEX);
+            currentAgentCommissionIndex = savedInstanceState.getInt(KEY_COMMISSION_INDEX);
+            updateDisplayAfterStateRestore();
+        }
+    }
+
+    private void updateDisplayAfterStateRestore() {
+        updateYohoDisplay();
+        updateWalletDisplay();
+        if (selectedMainAgentName != null) {
+            updateAgentBalanceDisplay();
+        }
     }
 
     // --- Setup Methods ---
@@ -208,13 +250,30 @@ public class MainActivity extends Activity {
                 if (!(focusedView instanceof EditText)) return;
                 EditText currentField = (EditText) focusedView;
                 isUpdating = true;
+                
                 if (currentField.getId() == aedInput.getId()) {
                     updateCalculationsFromAed(s.toString());
                 } else if (currentField.getId() == usdtInput.getId()) {
                     updateCalculationsFromUsdt(s.toString());
                 } else if (currentField.getId() == yohoInput.getId()) {
-                    updateCalculationsFromYoho(s.toString());
+                    if (isCustomCommissionSale && currentAgentCommissionIndex == 5) {
+                        // في التسعيرة المخصصة 260، نحسب فقط العمولة بدون تغيير قيمة الدرهم
+                        double aedAmount = parseDoubleSafe(aedInput.getText().toString());
+                        if (aedAmount > 0) {
+                            double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE_260;
+                            double customerYoho = parseDoubleSafe(s.toString());
+                            if (customerYoho > 0 && customerYoho <= baseYoho) {
+                                double commission = baseYoho - customerYoho;
+                                usdtInput.setText(yohoDecimalFormat.format(commission));
+                            } else {
+                                usdtInput.setText("");
+                            }
+                        }
+                    } else {
+                        updateCalculationsFromYoho(s.toString());
+                    }
                 }
+                
                 isUpdating = false;
             }
         };
@@ -319,9 +378,13 @@ public class MainActivity extends Activity {
         LinearLayout resetBtn = createMaterialIconButton(R.drawable.ic_restart_alt, "تصفير", "#FF6B6B");
         resetBtn.setOnClickListener(v -> handleReset());
 
+        LinearLayout calculatorBtn = createMaterialIconButton(R.drawable.ic_analytics, "الحاسبة السريعة", "#9C27B0");
+        calculatorBtn.setOnClickListener(v -> toggleQuickCalculator());
+
         layout.addView(chartBtn);
         layout.addView(shippingAgentsBtn);
         layout.addView(recordsBtn);
+        layout.addView(calculatorBtn);
         layout.addView(resetBtn);
 
         return layout;
@@ -746,10 +809,23 @@ public class MainActivity extends Activity {
                     double agentCommission = totalYohoGenerated - totalMemberYoho;
                     usdtInput.setText(yohoDecimalFormat.format(agentCommission));
                 } else if (isCustomCommissionSale) {
+                    double baseYoho = (aedAmount / 100.0) * currentCustomRate;
                     double customerYoho = parseDoubleSafe(yohoInput.getText().toString());
-                    double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE;
-                    double commission = baseYoho - customerYoho;
-                    usdtInput.setText(yohoDecimalFormat.format(commission));
+                    if (currentAgentCommissionIndex == 5) { // تسعيرة مخصصة 260
+                        if (customerYoho > 0) {
+                            double commission = baseYoho - customerYoho;
+                            if (commission >= 0) {
+                                usdtInput.setText(yohoDecimalFormat.format(commission));
+                            } else {
+                                usdtInput.setText("");
+                            }
+                        } else {
+                            usdtInput.setText("");
+                        }
+                    } else { // تسعيرة مخصصة 265
+                        double commission = baseYoho - customerYoho;
+                        usdtInput.setText(yohoDecimalFormat.format(commission));
+                    }
                 } else {
                     double yohoRate = agentCommissionPrices[currentAgentCommissionIndex] / 100.0;
                     double yohoForMember = aedAmount * yohoRate;
@@ -787,10 +863,17 @@ public class MainActivity extends Activity {
 
     private void updateCalculationsFromYoho(String yohoStr) {
         if (isCustomCommissionSale) {
-            updateCalculationsFromAed(aedInput.getText().toString());
+            if (currentAgentCommissionIndex == 5) { // تسعيرة مخصصة 260
+                // لا نفعل شيئاً هنا لأن التحديث يتم في TextWatcher
+                return;
+            } else { // تسعيرة مخصصة 265 أو غيرها
+                updateCalculationsFromAed(aedInput.getText().toString());
+            }
             return;
         }
         if (isCustomGroupSaleActive) return;
+        
+        // التسعيرات العادية
         double yohoAmount = parseDoubleSafe(yohoStr);
         if (yohoAmount > 0) {
             double yohoRatePer100Aed = yohoPrices[currentYohoIndex];
@@ -836,7 +919,7 @@ public class MainActivity extends Activity {
         String type = isAdding ? "add" : "subtract";
         String message = generateWhatsappMessage(type, aedAmount, usdtAmount, newBalanceAed, newBalanceUsdt, null);
         saveTransactionRecord(type, aedAmount, usdtAmount, 0, OWNER_KEY_MAIN_WALLET, "Main Wallet Transaction", message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, isAdding ? "تمت الإضافة بنجاح" : "تم الخصم بنجاح", Toast.LENGTH_SHORT).show();
         updateWalletDisplay();
     }
@@ -956,25 +1039,40 @@ public class MainActivity extends Activity {
         saveAgentData(agent);
         String message = generateAgentSaleMessage(selectedMainAgentName, yohoForMember, commissionForAgent, agent.yohoBalance);
         saveTransactionRecord("agent_sale", aedAmount, 0, commissionForAgent, "AGENT:" + selectedMainAgentName, "YOHO للعضو: " + yohoForMember, message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, "تمت عملية البيع بنجاح", Toast.LENGTH_SHORT).show();
         updateAgentBalanceDisplay();
         resetInputs();
     }
 
-    private void performCustomCommissionSale() {
+        private void performCustomCommissionSale() {
         double aedAmount = parseDoubleSafe(aedInput.getText().toString());
         double customerYoho = parseDoubleSafe(yohoInput.getText().toString());
-        if (aedAmount <= 0 || customerYoho <= 0) {
-            Toast.makeText(this, "الرجاء إدخال مبلغ الدرهم الإماراتي و YOHO للبيع المخصص", Toast.LENGTH_LONG).show();
+        if (aedAmount <= 0) {
+            Toast.makeText(this, "الرجاء إدخال مبلغ الدرهم الإماراتي", Toast.LENGTH_LONG).show();
             return;
         }
-        double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE;
+        double baseYoho = (aedAmount / 100.0) * currentCustomRate;
+        
+        if (currentAgentCommissionIndex == 5) { // تسعيرة مخصصة 260
+            if (customerYoho <= 0) {
+                Toast.makeText(this, "الرجاء إدخال مبلغ YOHO للعميل", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (customerYoho > baseYoho) {
+                Toast.makeText(this, "خطأ: مبلغ YOHO المدخل أكبر من القيمة الأساسية", Toast.LENGTH_LONG).show();
+                return;
+            }
+        } else { // تسعيرة مخصصة 265
+            if (customerYoho <= 0) {
+                customerYoho = baseYoho;
+            }
+            if (customerYoho > baseYoho) {
+                Toast.makeText(this, "خطأ: مبلغ YOHO المدخل أكبر من القيمة الأساسية", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
         double commission = baseYoho - customerYoho;
-        if (commission < 0) {
-            Toast.makeText(this, "خطأ: مبلغ YOHO المدخل أكبر من القيمة الأساسية", Toast.LENGTH_LONG).show();
-            return;
-        }
         Agent agent = getAgentData(selectedMainAgentName);
         if (agent == null) return;
         String beforeState = agent.yohoBalance + "|" + agent.aedBalance;
@@ -983,7 +1081,7 @@ public class MainActivity extends Activity {
         saveAgentData(agent);
         String message = generateAgentCustomSaleMessage(agent.name, aedAmount, customerYoho, commission, agent.yohoBalance);
         saveTransactionRecord("agent_custom_sale", aedAmount, 0, commission, "AGENT:" + agent.name, "بيع مخصص. YOHO العميل: " + customerYoho, message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, "تمت عملية البيع المخصص بنجاح", Toast.LENGTH_SHORT).show();
         resetSelection();
     }
@@ -1000,7 +1098,7 @@ public class MainActivity extends Activity {
         }
         double baseRate = agentCommissionPrices[3];
         if (baseRate <= 0) {
-            baseRate = CUSTOM_SALE_BASE_RATE;
+            baseRate = CUSTOM_SALE_BASE_RATE_265;
         }
         double totalYohoGenerated = aedAmount * (baseRate / 100.0);
         double totalMemberYoho = 0;
@@ -1022,7 +1120,7 @@ public class MainActivity extends Activity {
         saveAgentData(agent);
         String message = generateGroupSaleMessage(selectedMainAgentName, customMemberSales, agentCommission, agent.yohoBalance);
         saveTransactionRecord("group_sale", aedAmount, 0, agentCommission, "AGENT:" + selectedMainAgentName, detailsBuilder.toString(), message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, "تمت المعاملة بنجاح", Toast.LENGTH_SHORT).show();
         resetSelection();
     }
@@ -1042,7 +1140,7 @@ public class MainActivity extends Activity {
         saveAgentData(agent);
         String message = generateAgentYohoMessage("transfer", selectedMainAgentName, yohoToSubtract, agent.yohoBalance);
         saveTransactionRecord("agent_transfer_stock", aedAmount, 0, yohoToSubtract, "AGENT:" + selectedMainAgentName, "تحويل من مخزون الوكيل", message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, "تم تحويل الرصيد من الوكيل", Toast.LENGTH_SHORT).show();
         updateAgentBalanceDisplay();
         resetInputs();
@@ -1061,7 +1159,7 @@ public class MainActivity extends Activity {
         saveAgentData(agent);
         String message = generateAgentYohoMessage("subtract", selectedMainAgentName, yohoAmount, agent.yohoBalance);
         saveTransactionRecord("withdraw_agent_yoho", 0, 0, yohoAmount, "AGENT:" + selectedMainAgentName, "سحب YOHO مباشر", message, beforeState);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         Toast.makeText(this, "تم سحب YOHO من الوكيل", Toast.LENGTH_SHORT).show();
         updateAgentBalanceDisplay();
         resetInputs();
@@ -1174,12 +1272,22 @@ public class MainActivity extends Activity {
         preferences.edit().putStringSet(RECORDS_PREFS_KEY, newRecords).apply();
     }
 
-    private void copyToClipboard(String text) {
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("Transaction", text);
-        if (clipboard != null) {
-            clipboard.setPrimaryClip(clip);
-            Toast.makeText(this, "تم نسخ الرسالة!", Toast.LENGTH_SHORT).show();
+    private void shareToWhatsApp(String text) {
+        try {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, text);
+            sendIntent.setType("text/plain");
+            sendIntent.setPackage("com.whatsapp.w4b"); // WhatsApp Business
+            startActivity(sendIntent);
+        } catch (Exception e) {
+            // إذا لم يكن WhatsApp مثبتاً، نقوم بالنسخ كاحتياط
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Transaction", text);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "تم نسخ الرسالة! (WhatsApp Business غير مثبت)", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -1189,22 +1297,22 @@ public class MainActivity extends Activity {
         isCustomCommissionSale = false;
         yohoInput.setEnabled(true);
         aedInput.setEnabled(true);
-        yohoInput.setHint("YOHO"); // Changed hint back to English
+        yohoInput.setHint("YOHO");
         if (isTransferToMemberMode) {
             yohoPriceSelector.setVisibility(View.GONE);
             agentCommissionButton.setVisibility(View.VISIBLE);
             if (isCustomGroupSaleActive) {
-                agentCommissionButton.setText("سعر مجموعة مخصص"); // Translated text
+                agentCommissionButton.setText("سعر مجموعة مخصص");
                 yohoInput.setText("");
-                yohoInput.setHint("توزيع مخصص"); // Translated hint
+                yohoInput.setHint("توزيع مخصص");
                 yohoInput.setEnabled(false);
-            } else if (currentAgentCommissionIndex == 4) { // تسعرة مخصصة
+            } else if (currentAgentCommissionIndex == 4 || currentAgentCommissionIndex == 5) { // تسعيرة مخصصة
                 isCustomCommissionSale = true;
-                agentCommissionButton.setText(agentCommissionNames[4]);
+                agentCommissionButton.setText(agentCommissionNames[currentAgentCommissionIndex]);
             } else if (currentAgentCommissionIndex != -1) {
                 agentCommissionButton.setText(agentCommissionNames[currentAgentCommissionIndex]);
             } else {
-                agentCommissionButton.setText("اختر سعر العميل"); // Translated text
+                agentCommissionButton.setText("اختر سعر العميل");
             }
         } else {
             yohoPriceSelector.setVisibility(View.VISIBLE);
@@ -1266,9 +1374,8 @@ public class MainActivity extends Activity {
         yohoInput.setEnabled(true);
         aedInput.setEnabled(true);
 
-
         if (usdtIconView != null) {
-            usdtIconView.setImageResource(R.drawable.usdt_icon);
+            try { usdtIconView.setImageResource(R.drawable.usdt_icon); } catch (Exception ignored) {}
         }
         usdtInput.setHint("0.00");
         usdtInput.setEnabled(true);
@@ -1285,7 +1392,7 @@ public class MainActivity extends Activity {
             selectedAgentTextView.setBackgroundColor(Color.parseColor("#F39C12"));
             currentAgentCommissionIndex = 0;
 
-            usdtIconView.setImageResource(R.drawable.yoho_icon);
+            try { usdtIconView.setImageResource(R.drawable.yoho_icon); } catch (Exception ignored) {}
             usdtInput.setHint("العمولة");
             usdtInput.setEnabled(false);
             usdtInput.setText("");
@@ -1295,7 +1402,7 @@ public class MainActivity extends Activity {
             selectedAgentTextView.setBackgroundColor(Color.parseColor("#3498DB"));
             currentAgentCommissionIndex = -1;
 
-            usdtIconView.setImageResource(R.drawable.usdt_icon);
+            try { usdtIconView.setImageResource(R.drawable.usdt_icon); } catch (Exception ignored) {}
             usdtInput.setHint("0.00");
             usdtInput.setEnabled(true);
         }
@@ -1304,45 +1411,142 @@ public class MainActivity extends Activity {
         updateAgentBalanceDisplay();
     }
 
+    // --- إدارة النوافذ المنبثقة (الحل الجديد) ---
+
+    /**
+     * دالة مساعدة لإغلاق جميع نوافذ ListPopupWindow المفتوحة حالياً.
+     * هذا يضمن وجود نافذة منبثقة واحدة فقط على الشاشة في كل مرة.
+     */
+    private void cleanupPopupWindows() {
+        if (agentListPopupWindow != null) {
+            agentListPopupWindow.dismiss();
+            agentListPopupWindow = null;
+        }
+        if (yohoPricePopupWindow != null) {
+            yohoPricePopupWindow.dismiss();
+            yohoPricePopupWindow = null;
+        }
+        if (agentCommissionPopupWindow != null) {
+            agentCommissionPopupWindow.dismiss();
+            agentCommissionPopupWindow = null;
+        }
+    }
+
+    private void dismissAllPopups() {
+        if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
+            agentListPopupWindow.dismiss();
+        }
+        if (yohoPricePopupWindow != null && yohoPricePopupWindow.isShowing()) {
+            yohoPricePopupWindow.dismiss();
+        }
+        if (agentCommissionPopupWindow != null && agentCommissionPopupWindow.isShowing()) {
+            agentCommissionPopupWindow.dismiss();
+        }
+    }
+
     private void showYohoPrices(View anchorView) {
-        ListPopupWindow listPopupWindow = new ListPopupWindow(this);
-        listPopupWindow.setAnchorView(anchorView);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, yohoNames);
-        listPopupWindow.setAdapter(adapter);
-        listPopupWindow.setWidth(anchorView.getWidth());
-        listPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
-            currentYohoIndex = position;
-            updateYohoDisplay();
-            listPopupWindow.dismiss();
-        });
-        listPopupWindow.show();
+        if (!isActivityActive) return;
+
+        // سلوك التبديل: إذا كانت هذه النافذة مفتوحة بالفعل، أغلقها.
+        if (yohoPricePopupWindow != null && yohoPricePopupWindow.isShowing()) {
+            yohoPricePopupWindow.dismiss();
+            return;
+        }
+
+        // أغلق أي نوافذ منبثقة أخرى قد تكون مفتوحة
+        dismissAllPopups();
+
+        try {
+            // إنشاء نافذة جديدة في كل مرة لتجنب المشاكل
+            yohoPricePopupWindow = new ListPopupWindow(this);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, yohoNames);
+            yohoPricePopupWindow.setAdapter(adapter);
+            yohoPricePopupWindow.setModal(true); // جعل النافذة modal لمنع التفاعل مع العناصر خلفها
+            yohoPricePopupWindow.setOnItemClickListener((parent, view, position, id) -> {
+                if (isActivityActive) {
+                    currentYohoIndex = position;
+                    updateYohoDisplay();
+                }
+                dismissAllPopups();
+            });
+            
+            // إضافة إمكانية الإغلاق عند النقر خارج النافذة
+            yohoPricePopupWindow.setOnDismissListener(() -> {
+                if (yohoPricePopupWindow != null) {
+                    yohoPricePopupWindow = null;
+                }
+            });
+
+            // قم بتكوين وإظهار النافذة
+            yohoPricePopupWindow.setAnchorView(anchorView);
+            yohoPricePopupWindow.setWidth(anchorView.getWidth());
+            yohoPricePopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
+            yohoPricePopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+            yohoPricePopupWindow.show();
+        } catch (Exception e) {
+            Log.e("PopupError", "Error showing yoho prices popup", e);
+            Toast.makeText(this, "حدث خطأ في عرض القائمة", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showAgentCommissionPrices(View anchorView) {
+        if (!isActivityActive) return;
+
         if (!isTransferToMemberMode) {
             Toast.makeText(this, "الرجاء تحديد وضع بيع الوكيل أولاً", Toast.LENGTH_SHORT).show();
             return;
         }
-        ListPopupWindow listPopupWindow = new ListPopupWindow(this);
-        listPopupWindow.setAnchorView(anchorView);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, agentCommissionNames);
-        listPopupWindow.setAdapter(adapter);
-        listPopupWindow.setWidth(anchorView.getWidth());
-        listPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
-            isCustomGroupSaleActive = false;
-            isCustomCommissionSale = false;
-            customMemberSales.clear();
-            currentAgentCommissionIndex = position;
-            if (position == 3) {
-                isCustomGroupSaleActive = true;
-                showMemberGroupSaleDialog();
-            } else if (position == 4) {
-                isCustomCommissionSale = true;
-            }
-            updateYohoDisplay();
-            listPopupWindow.dismiss();
-        });
-        listPopupWindow.show();
+
+        // سلوك التبديل: إذا كانت هذه النافذة مفتوحة بالفعل، أغلقها.
+        if (agentCommissionPopupWindow != null && agentCommissionPopupWindow.isShowing()) {
+            agentCommissionPopupWindow.dismiss();
+            return;
+        }
+
+        // أغلق أي نوافذ منبثقة أخرى قد تكون مفتوحة
+        dismissAllPopups();
+
+        try {
+            // إنشاء نافذة جديدة في كل مرة لتجنب المشاكل
+            agentCommissionPopupWindow = new ListPopupWindow(this);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, agentCommissionNames);
+            agentCommissionPopupWindow.setAdapter(adapter);
+            agentCommissionPopupWindow.setModal(true);
+            agentCommissionPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
+                if (isActivityActive) {
+                    isCustomGroupSaleActive = false;
+                    isCustomCommissionSale = false;
+                    customMemberSales.clear();
+                    currentAgentCommissionIndex = position;
+                    if (position == 3) {
+                        isCustomGroupSaleActive = true;
+                        showMemberGroupSaleDialog();
+                    } else if (position == 4 || position == 5) {
+                        isCustomCommissionSale = true;
+                        currentCustomRate = position == 4 ? CUSTOM_SALE_BASE_RATE_265 : CUSTOM_SALE_BASE_RATE_260;
+                    }
+                    updateYohoDisplay();
+                }
+                dismissAllPopups();
+            });
+
+            // إضافة إمكانية الإغلاق عند النقر خارج النافذة
+            agentCommissionPopupWindow.setOnDismissListener(() -> {
+                if (agentCommissionPopupWindow != null) {
+                    agentCommissionPopupWindow = null;
+                }
+            });
+
+            // قم بتكوين وإظهار النافذة
+            agentCommissionPopupWindow.setAnchorView(anchorView);
+            agentCommissionPopupWindow.setWidth(anchorView.getWidth());
+            agentCommissionPopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
+            agentCommissionPopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+            agentCommissionPopupWindow.show();
+        } catch (Exception e) {
+            Log.e("PopupError", "Error showing agent commission popup", e);
+            Toast.makeText(this, "حدث خطأ في عرض قائمة العمولات", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showMemberGroupSaleDialog() {
@@ -1426,33 +1630,61 @@ public class MainActivity extends Activity {
     }
 
     private void showAgentPopupMenu(View anchorView) {
-        if (listPopupWindow != null && listPopupWindow.isShowing()) {
-            listPopupWindow.dismiss();
-            listPopupWindow = null;
+        if (!isActivityActive) return;
+
+        // سلوك التبديل: إذا كانت هذه النافذة مفتوحة بالفعل، أغلقها.
+        if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
+            agentListPopupWindow.dismiss();
             return;
         }
-        listPopupWindow = new ListPopupWindow(this);
-        listPopupWindow.setAnchorView(anchorView);
-        Set<String> agentsSet = preferences.getStringSet(AGENTS_PREFS_KEY, new HashSet<>());
-        List<String> agentNames = new ArrayList<>();
-        for (String agentData : agentsSet) {
-            agentNames.add(agentData.split("\\|")[0]);
-        }
-        Collections.sort(agentNames);
-        List<Object> menuItems = new ArrayList<>(agentNames);
-        menuItems.add(ACTION_ITEM_MARKER);
-        MenuAdapter adapter = new MenuAdapter(this, menuItems);
-        listPopupWindow.setAdapter(adapter);
-        listPopupWindow.setWidth(anchorView.getWidth());
-        listPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
-            Object selectedItem = menuItems.get(position);
-            if (selectedItem instanceof String) {
-                setupAgentMode((String) selectedItem, isAgentSaleMode);
+
+        // أغلق أي نوافذ منبثقة أخرى قد تكون مفتوحة
+        dismissAllPopups();
+
+        try {
+            // إنشاء نافذة جديدة في كل مرة لتجنب المشاكل
+            agentListPopupWindow = new ListPopupWindow(this);
+
+            // أنشئ محولاً جديداً في كل مرة لأن قائمة الوكلاء قد تتغير
+            Set<String> agentsSet = preferences.getStringSet(AGENTS_PREFS_KEY, new HashSet<>());
+            List<String> agentNames = new ArrayList<>();
+            for (String agentData : agentsSet) {
+                agentNames.add(agentData.split("\\|")[0]);
             }
-            listPopupWindow.dismiss();
-            listPopupWindow = null;
-        });
-        listPopupWindow.show();
+            Collections.sort(agentNames);
+            List<Object> menuItems = new ArrayList<>(agentNames);
+            menuItems.add(ACTION_ITEM_MARKER); // علامة لإضافة أزرار الإجراءات
+            MenuAdapter adapter = new MenuAdapter(this, menuItems);
+            agentListPopupWindow.setAdapter(adapter);
+            agentListPopupWindow.setModal(true);
+
+            agentListPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
+                if (isActivityActive) {
+                    Object selectedItem = adapter.getItem(position);
+                    if (selectedItem instanceof String) {
+                        setupAgentMode((String) selectedItem, isAgentSaleMode);
+                    }
+                }
+                dismissAllPopups();
+            });
+
+            // إضافة إمكانية الإغلاق عند النقر خارج النافذة
+            agentListPopupWindow.setOnDismissListener(() -> {
+                if (agentListPopupWindow != null) {
+                    agentListPopupWindow = null;
+                }
+            });
+
+            // قم بتكوين وإظهار النافذة
+            agentListPopupWindow.setAnchorView(anchorView);
+            agentListPopupWindow.setWidth(anchorView.getWidth());
+            agentListPopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
+            agentListPopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+            agentListPopupWindow.show();
+        } catch (Exception e) {
+            Log.e("PopupError", "Error showing agent list popup", e);
+            Toast.makeText(this, "حدث خطأ في عرض قائمة الوكلاء", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openRecordsActivity() {
@@ -1598,7 +1830,7 @@ public class MainActivity extends Activity {
                 parseDoubleSafe(preferences.getString("aed_wallet", "0.0")),
                 parseDoubleSafe(preferences.getString("usdt_wallet", "0.0")),
                 "تحويل من " + agent.name);
-        copyToClipboard(message);
+        shareToWhatsApp(message);
         saveTransactionRecord("agent_aed_transfer", amountToTransfer, 0, 0, "AGENT:" + agent.name, "تحويل درهم إماراتي إلى المحفظة الرئيسية", message, beforeState);
         Toast.makeText(this, "تم تحويل " + decimalFormat.format(amountToTransfer) + " درهم إماراتي إلى المحفظة الرئيسية", Toast.LENGTH_LONG).show();
         updateAgentBalanceDisplay();
@@ -1636,7 +1868,7 @@ public class MainActivity extends Activity {
                     String message = generateWhatsappMessage("reset", oldAed, oldUsdt, 0.0, 0.0, null);
                     saveTransactionRecord("reset", oldAed, oldUsdt, 0, OWNER_KEY_MAIN_WALLET, "إعادة تعيين المحفظة الرئيسية", message, beforeState);
                     updateWalletDisplay();
-                    copyToClipboard(message);
+                    shareToWhatsApp(message);
                     Toast.makeText(this, "تمت إعادة تعيين المحفظة", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("إلغاء", null)
@@ -1724,18 +1956,18 @@ public class MainActivity extends Activity {
                     actionsLayout.setGravity(Gravity.CENTER);
                     actionsLayout.setPadding(0, 10, 0, 10);
 
-                    // ## تم إصلاح الأخطاء هنا ##
                     ImageView addAgentButton = new ImageView(getContext());
                     LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, 100, 1f);
                     addAgentButton.setLayoutParams(buttonParams);
-                    addAgentButton.setImageResource(R.drawable.person_add_24);
+                    try { addAgentButton.setImageResource(R.drawable.person_add_24); } catch (Exception ignored) {}
                     addAgentButton.setColorFilter(Color.parseColor("#4CAF50"), PorterDuff.Mode.SRC_IN);
                     addAgentButton.setPadding(20, 20, 20, 20);
                     addAgentButton.setBackgroundColor(Color.parseColor("#E0E0E0"));
                     addAgentButton.setOnClickListener(v -> {
                         showAddAgentDialog();
-                        if (listPopupWindow != null && listPopupWindow.isShowing()) {
-                            listPopupWindow.dismiss();
+                        // أغلق النافذة المنبثقة الحالية
+                        if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
+                            agentListPopupWindow.dismiss();
                         }
                     });
                     actionsLayout.addView(addAgentButton);
@@ -1744,14 +1976,15 @@ public class MainActivity extends Activity {
                     LinearLayout.LayoutParams deleteButtonParams = new LinearLayout.LayoutParams(0, 100, 1f);
                     deleteButtonParams.setMarginStart(10);
                     deleteAgentButton.setLayoutParams(deleteButtonParams);
-                    deleteAgentButton.setImageResource(R.drawable.person_remove_24);
+                    try { deleteAgentButton.setImageResource(R.drawable.person_remove_24); } catch (Exception ignored) {}
                     deleteAgentButton.setColorFilter(Color.parseColor("#F44336"), PorterDuff.Mode.SRC_IN);
                     deleteAgentButton.setPadding(20, 20, 20, 20);
                     deleteAgentButton.setBackgroundColor(Color.parseColor("#E0E0E0"));
                     deleteAgentButton.setOnClickListener(v -> {
                         showDeleteAgentDialog();
-                        if (listPopupWindow != null && listPopupWindow.isShowing()) {
-                            listPopupWindow.dismiss();
+                        // أغلق النافذة المنبثقة الحالية
+                        if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
+                            agentListPopupWindow.dismiss();
                         }
                     });
                     actionsLayout.addView(deleteAgentButton);
@@ -1762,7 +1995,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ## كود التحديث: الدوال اللازمة للتحقق والتحميل والتثبيت ##
+    // --- كود التحديث: الدوال اللازمة للتحقق والتحميل والتثبيت ---
 
     private int getCurrentVersionCode() {
         try {
@@ -1816,41 +2049,79 @@ public class MainActivity extends Activity {
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private void downloadAndInstallApk(String apkUrl) {
-        String destination = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/app-update.apk";
-        Uri uri = Uri.parse("file://" + destination);
+    private void toggleQuickCalculator() {
+        new AlertDialog.Builder(this)
+            .setTitle("الحاسبة السريعة")
+            .setMessage("سيتم إطلاق هذه الميزة قريباً!\n\nStay tuned!")
+            .setPositiveButton("حسناً", null)
+            .show();
+    }
 
-        File file = new File(destination);
-        if (file.exists()) {
-            file.delete();
+    private boolean isAccessibilityServiceEnabled() {
+        String serviceName = getPackageName() + "/" + QuickCalculatorService.class.getCanonicalName();
+        int accessibilityEnabled = 0;
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                    getContentResolver(),
+                    Settings.Secure.ACCESSIBILITY_ENABLED);
+        } catch (Settings.SettingNotFoundException e) {
+            return false;
         }
+
+        if (accessibilityEnabled == 1) {
+            String settingValue = Settings.Secure.getString(
+                    getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (settingValue != null) {
+                return settingValue.contains(serviceName);
+            }
+        }
+        return false;
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private void downloadAndInstallApk(String apkUrl) {
+        String fileName = "app-update.apk";
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(apkUrl));
         request.setMimeType("application/vnd.android.package-archive");
         request.setTitle("تحميل التحديث");
         request.setDescription("جاري تحميل الإصدار الجديد...");
-        request.setDestinationUri(uri);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+        // استخدم الطريقة الموصى بها لتحديد وجهة التحميل
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
 
         Toast.makeText(this, "بدأ تحميل التحديث...", Toast.LENGTH_LONG).show();
         final DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager == null) {
+            Toast.makeText(this, "فشل بدء التحميل.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         final long downloadId = downloadManager.enqueue(request);
 
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             public void onReceive(Context ctxt, Intent intent) {
                 long receivedDownloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                 if (downloadId == receivedDownloadId) {
+                    unregisterReceiver(this); // إلغاء تسجيل المستقبل أولاً
                     try {
-                        File apkFile = new File(destination);
-                        Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".provider", apkFile);
+                        // استخدم الـ URI الذي يوفره مدير التحميل مباشرة
+                        Uri apkUri = downloadManager.getUriForDownloadedFile(downloadId);
+                        if (apkUri == null) {
+                            Log.e("UpdateInstaller", "فشل التحميل، الـ URI فارغ.");
+                            Toast.makeText(MainActivity.this, "فشل التحميل. حاول مرة أخرى.", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
                         Intent installIntent = new Intent(Intent.ACTION_VIEW);
                         installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
                         installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(installIntent);
+
                     } catch (Exception e) {
-                        Log.e("UpdateInstaller", "Error installing APK", e);
+                        Log.e("UpdateInstaller", "خطأ أثناء تثبيت APK", e);
                         Toast.makeText(MainActivity.this, "فشل تثبيت التحديث.", Toast.LENGTH_LONG).show();
-                    } finally {
-                        unregisterReceiver(this);
                     }
                 }
             }

@@ -19,8 +19,8 @@ android {
         applicationId "com.mosaedbarmaja.exchangenew"
         minSdk 24
         targetSdk 34
-        versionCode 3
-        versionName "1.0.3"
+        versionCode 5
+        versionName "1.0.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,8 +36,8 @@ android {
         // تم التحديث إلى Java 17 (أو يمكنك استخدام 11).
         // هذا لمعالجة تحذير "source value 8 is obsolete".
         // يمكنك تغيير هذا إلى JavaVersion.VERSION_1_11 أو JavaVersion.VERSION_1_17
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
