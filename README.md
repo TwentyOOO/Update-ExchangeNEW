@@ -18,7 +18,12 @@
 تم إصلاح جميع المشاكل البرمجية الحرجة وتحسين استقرار التطبيق بشكل كبير. يتضمن هذا الإصدار إصلاحات لمشاكل القسمة على صفر، تحسين إدارة الذاكرة، وتحسين الأداء العام.
 
 ## التثبيت
-قم بتحميل ملف APK من [الرابط المباشر](https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release-v6.apk)
+
+### الإصدار المحسّن (موصى به):
+قم بتحميل ملف APK من [الرابط المباشر](https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release-enhanced-ui.apk)
+
+### الإصدار الأصلي:
+[رابط الإصدار الأصلي](https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release.apk)
 
 ## متطلبات النظام
 - أندرويد 7.0 (API 24) أو أحدث

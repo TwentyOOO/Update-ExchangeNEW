@@ -1,5 +1,7 @@
 {
-  "latestVersionCode": 5,
-  "apkUrl": "https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release.apk",
-  "lastUpdated": "2025-09-20T21:53:34Z"
+  "latestVersionCode": 6,
+  "apkUrl": "https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release-enhanced-ui.apk",
+  "lastUpdated": "2025-09-21T22:10:00Z",
+  "updateNotes": "تحسينات واجهة المستخدم: أزرار أكثر وضوحاً، ألوان محسّنة، تصميم عصري",
+  "isUIUpdate": true
 }
