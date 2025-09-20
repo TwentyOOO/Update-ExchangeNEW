@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@color/background_card"
+    android:elevation="8dp">
+
+    <!-- Button: الكل -->
+    <Button
+        style="@style/EnhancedButton.Primary"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:layout_marginEnd="4dp"
+        android:text="الكل"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:background="@color/button_primary"
+        android:textColor="@color/text_on_primary"
+        android:elevation="4dp" />
+
+    <!-- Button: مبيعات -->
+    <Button
+        style="@style/EnhancedButton.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:text="مبيعات"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:background="@color/button_secondary"
+        android:textColor="@color/text_on_secondary"
+        android:elevation="4dp" />
+
+    <!-- Button: تحويل -->
+    <Button
+        style="@style/EnhancedButton.Accent"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:text="تحويل"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:background="@color/button_accent"
+        android:textColor="@color/text_on_primary"
+        android:elevation="4dp" />
+
+    <!-- Button: إيداع/خصم -->
+    <Button
+        style="@style/EnhancedButton.Danger"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        android:text="إيداع/خصم"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:background="@color/button_danger"
+        android:textColor="@color/text_on_primary"
+        android:elevation="4dp" />
+
+</LinearLayout>

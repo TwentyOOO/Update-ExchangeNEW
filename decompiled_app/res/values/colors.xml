@@ -333,3 +333,35 @@
     <color name="tooltip_background_light">#e6ffffff</color>
     <color name="white">#ffffffff</color>
 </resources>
+
+    <!-- Enhanced UI Colors for Better Visibility -->
+    <color name="button_primary">#FF2196F3</color>
+    <color name="button_primary_pressed">#FF1976D2</color>
+    <color name="button_secondary">#FF4CAF50</color>
+    <color name="button_secondary_pressed">#FF388E3C</color>
+    <color name="button_accent">#FFFF9800</color>
+    <color name="button_accent_pressed">#FFF57C00</color>
+    <color name="button_danger">#FFF44336</color>
+    <color name="button_danger_pressed">#FFD32F2F</color>
+    
+    <!-- Text Colors for Better Contrast -->
+    <color name="text_primary_dark">#FF212121</color>
+    <color name="text_secondary_dark">#FF757575</color>
+    <color name="text_on_primary">#FFFFFFFF</color>
+    <color name="text_on_secondary">#FFFFFFFF</color>
+    
+    <!-- Background Colors -->
+    <color name="background_light">#FFFAFAFA</color>
+    <color name="background_card">#FFFFFFFF</color>
+    <color name="background_elevated">#FFFFFFFF</color>
+    
+    <!-- Border and Divider Colors -->
+    <color name="border_light">#FFE0E0E0</color>
+    <color name="divider_light">#FFBDBDBD</color>
+    
+    <!-- Status Colors -->
+    <color name="success_color">#FF4CAF50</color>
+    <color name="warning_color">#FFFF9800</color>
+    <color name="error_color">#FFF44336</color>
+    <color name="info_color">#FF2196F3</color>
+</resources>

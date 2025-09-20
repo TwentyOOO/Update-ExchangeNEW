@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/EnhancedCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/background_card">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Transaction Type Icon -->
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@color/success_color"
+            android:gravity="center"
+            android:layout_marginEnd="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textColor="@color/text_on_secondary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Transaction Details -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Amount -->
+            <TextView
+                style="@style/EnhancedText.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="AED 🇦🇪: 1,000.01"
+                android:textColor="@color/success_color"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Description -->
+            <TextView
+                style="@style/EnhancedText.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Main Wallet Transaction : التفاصيل"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+        <!-- Date and Time -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                style="@style/EnhancedText.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="05/09/2025"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="12sp"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                style="@style/EnhancedText.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="22:23"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
