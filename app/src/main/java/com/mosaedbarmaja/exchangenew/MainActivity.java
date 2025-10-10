@@ -2550,11 +2550,19 @@ public class MainActivity extends Activity {
     }
 
     private void checkForUpdate() {
+        Log.d("UpdateChecker", "📱 Starting update check...");
+        Log.d("UpdateChecker", "🌐 URL: " + UPDATE_JSON_URL);
+
         new Thread(() -> {
             try {
                 URL url = new URL(UPDATE_JSON_URL);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
                 connection.connect();
+
+                int responseCode = connection.getResponseCode();
+                Log.d("UpdateChecker", "📡 HTTP Response Code: " + responseCode);
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder stringBuilder = new StringBuilder();
@@ -2565,35 +2573,49 @@ public class MainActivity extends Activity {
                 reader.close();
                 String jsonString = stringBuilder.toString();
 
+                Log.d("UpdateChecker", "📄 JSON Response: " + jsonString);
+
                 JSONObject jsonObject = new JSONObject(jsonString);
-                int latestVersionCode = jsonObject.getInt("versionCode");  // ✅ تصحيح اسم المفتاح
+                int latestVersionCode = jsonObject.getInt("versionCode");
                 String apkUrl = jsonObject.getString("apkUrl");
 
                 int currentVersionCode = getCurrentVersionCode();
 
-                Log.d("UpdateChecker", "Current version: " + currentVersionCode + ", Latest version: " + latestVersionCode);
+                Log.d("UpdateChecker", "📊 Current version: " + currentVersionCode + ", Latest version: " + latestVersionCode);
 
                 if (latestVersionCode > currentVersionCode) {
-                    Log.d("UpdateChecker", "Update available! Showing dialog.");
+                    Log.d("UpdateChecker", "🎉 Update available! Showing dialog.");
                     runOnUiThread(() -> showUpdateDialog(apkUrl));
                 } else {
-                    Log.d("UpdateChecker", "App is up to date.");
+                    Log.d("UpdateChecker", "✅ App is up to date.");
                 }
 
             } catch (Exception e) {
-                Log.e("UpdateChecker", "Error checking for update", e);
+                Log.e("UpdateChecker", "❌ Error checking for update: " + e.getMessage(), e);
+                e.printStackTrace();
             }
         }).start();
     }
 
     private void showUpdateDialog(String apkUrl) {
-        new AlertDialog.Builder(this)
-                .setTitle("تحديث جديد متوفر")
-                .setMessage("يوجد إصدار جديد من التطبيق، هل ترغب في تحميله الآن؟")
-                .setPositiveButton("تحديث الآن", (dialog, which) -> downloadAndInstallApk(apkUrl))
-                .setNegativeButton("لاحقاً", null)
-                .setCancelable(false)
-                .show();
+        Log.d("UpdateChecker", "💬 Showing update dialog for APK: " + apkUrl);
+        try {
+            new AlertDialog.Builder(this)
+                    .setTitle("تحديث جديد متوفر")
+                    .setMessage("يوجد إصدار جديد من التطبيق، هل ترغب في تحميله الآن؟")
+                    .setPositiveButton("تحديث الآن", (dialog, which) -> {
+                        Log.d("UpdateChecker", "✅ User clicked 'Update Now'");
+                        downloadAndInstallApk(apkUrl);
+                    })
+                    .setNegativeButton("لاحقاً", (dialog, which) -> {
+                        Log.d("UpdateChecker", "⏭️ User clicked 'Later'");
+                    })
+                    .setCancelable(false)
+                    .show();
+            Log.d("UpdateChecker", "✅ Dialog shown successfully");
+        } catch (Exception e) {
+            Log.e("UpdateChecker", "❌ Error showing dialog: " + e.getMessage(), e);
+        }
     }
 
 
