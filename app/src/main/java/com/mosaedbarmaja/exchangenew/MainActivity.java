@@ -2566,13 +2566,18 @@ public class MainActivity extends Activity {
                 String jsonString = stringBuilder.toString();
 
                 JSONObject jsonObject = new JSONObject(jsonString);
-                int latestVersionCode = jsonObject.getInt("latestVersionCode");
+                int latestVersionCode = jsonObject.getInt("versionCode");  // ✅ تصحيح اسم المفتاح
                 String apkUrl = jsonObject.getString("apkUrl");
 
                 int currentVersionCode = getCurrentVersionCode();
 
+                Log.d("UpdateChecker", "Current version: " + currentVersionCode + ", Latest version: " + latestVersionCode);
+
                 if (latestVersionCode > currentVersionCode) {
+                    Log.d("UpdateChecker", "Update available! Showing dialog.");
                     runOnUiThread(() -> showUpdateDialog(apkUrl));
+                } else {
+                    Log.d("UpdateChecker", "App is up to date.");
                 }
 
             } catch (Exception e) {
