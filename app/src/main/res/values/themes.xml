@@ -1,9 +1,101 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.ExchangeNEW" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- الألوان الأساسية -->
+        <item name="colorPrimary">@color/primary_gold</item>
+        <item name="colorPrimaryVariant">@color/primary_gold_dark</item>
+        <item name="colorOnPrimary">@color/background_dark</item>
+
+        <!-- الألوان الثانوية -->
+        <item name="colorSecondary">@color/accent_blue</item>
+        <item name="colorSecondaryVariant">@color/accent_purple</item>
+        <item name="colorOnSecondary">@color/text_primary</item>
+
+        <!-- ألوان الخلفية -->
+        <item name="android:colorBackground">@color/background_dark</item>
+        <item name="colorSurface">@color/background_card</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+
+        <!-- ألوان النصوص -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+
+        <!-- حالات الأخطاء -->
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/text_primary</item>
+
+        <!-- تخصيصات إضافية -->
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.ExchangeNEW" parent="Base.Theme.ExchangeNEW" />
+
+    <!-- أنماط مخصصة للبطاقات -->
+    <style name="CardStyle">
+        <item name="cardBackgroundColor">@color/background_card</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">8dp</item>
+        <item name="contentPadding">16dp</item>
+    </style>
+
+    <!-- أنماط مخصصة للأزرار -->
+    <style name="ButtonStyle" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+
+    <style name="ButtonStyle.Add">
+        <item name="backgroundTint">@color/button_add</item>
+    </style>
+
+    <style name="ButtonStyle.Subtract">
+        <item name="backgroundTint">@color/button_subtract</item>
+    </style>
+
+    <style name="ButtonStyle.Neutral">
+        <item name="backgroundTint">@color/button_neutral</item>
+    </style>
+
+    <!-- أنماط النصوص -->
+    <style name="TextStyle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="TextStyle.Title">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="TextStyle.Subtitle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <style name="TextStyle.Body">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="TextStyle.Caption">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <!-- أنماط حقول الإدخال -->
+    <style name="EditTextStyle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        <item name="android:background">@color/background_surface</item>
+        <item name="android:padding">12dp</item>
+    </style>
 </resources>

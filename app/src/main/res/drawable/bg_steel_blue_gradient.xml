@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- تدرج من أزرق حديدي إلى أغمق -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#1c2833"
+                android:centerColor="#17202a"
+                android:endColor="#151d25"/>
+        </shape>
+    </item>
+    
+    <!-- طبقة زرقاء شفافة -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0F3498DB"/>
+        </shape>
+    </item>
+    
+</layer-list>
+

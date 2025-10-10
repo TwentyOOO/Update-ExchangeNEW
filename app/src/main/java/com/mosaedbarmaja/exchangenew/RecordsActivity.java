@@ -5,13 +5,16 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.Html;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
@@ -20,10 +23,12 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.core.content.ContextCompat;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -36,13 +41,14 @@ import java.util.Set;
 
 public class RecordsActivity extends Activity {
 
-    // --- Views & State for Selection Mode ---
+    // --- Views & State ---
     private LinearLayout recordsContainer;
     private EditText searchInput;
     private Button btnSelect, btnDeleteSelected, btnCancelSelection, btnSelectAll;
     private HorizontalScrollView filterScrollView;
+    private TextView emptyStateText;
 
-    // --- Data & Utilities ---
+    // --- Data ---
     private SharedPreferences preferences;
     private List<Transaction> allTransactions;
     private List<Transaction> currentlyDisplayedTransactions;
@@ -51,11 +57,11 @@ public class RecordsActivity extends Activity {
     private DecimalFormat decimalFormat;
     private DecimalFormat yohoDecimalFormat;
 
-    // --- State variables for selection ---
+    // --- Selection State ---
     private boolean isInSelectionMode = false;
     private final Set<Transaction> selectedTransactions = new HashSet<>();
 
-    // --- Data Holder Classes ---
+    // --- Transaction Data Class ---
     private static class Transaction implements Comparable<Transaction> {
         long timestamp;
         String type, date, time, owner, details, whatsappMessage, beforeState, rawRecord;
@@ -101,76 +107,179 @@ public class RecordsActivity extends Activity {
         yohoDecimalFormat = new DecimalFormat("#,##0", symbols);
     }
 
+    // ==================== UI SETUP - محسّن ====================
+
     private void setupUI() {
         LinearLayout mainLayout = new LinearLayout(this);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setBackgroundColor(Color.WHITE);
+
+        // ✅ خلفية بالتدرج الأزرق الداكن
+        mainLayout.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_steel_blue_premium));
+
         mainLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        mainLayout.addView(createHeader());
-        mainLayout.addView(createSearchAndFilterBar());
+        mainLayout.addView(createModernHeader());
+        mainLayout.addView(createSearchBar());
+        mainLayout.addView(createFilterButtons());
 
-        // *** ملاحظة هامة للأداء ***
-        // استخدام ScrollView مع بناء الواجهة بهذا الشكل سيء جداً للأداء
-        // إذا كان هناك عدد كبير من السجلات (مثلاً أكثر من 50)، سيصبح التطبيق بطيئاً جداً وقد يتجمد.
-        // الحل الصحيح هو استخدام RecyclerView بدلاً من ScrollView.
+        // ✅ ScrollView محسّن
         ScrollView scrollView = new ScrollView(this);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0,
+            1.0f // weight
         );
-        scrollParams.setMargins(0, 10, 0, 0);
         scrollView.setLayoutParams(scrollParams);
+        scrollView.setFillViewport(true);
 
         recordsContainer = new LinearLayout(this);
         recordsContainer.setOrientation(LinearLayout.VERTICAL);
-        recordsContainer.setPadding(20,10,20,20);
+        recordsContainer.setPadding(16, 16, 16, 16);
         scrollView.addView(recordsContainer);
 
         mainLayout.addView(scrollView);
         setContentView(mainLayout);
     }
 
-    private View createHeader() {
+    // ==================== HEADER - محسّن مع Ripple ====================
+
+    private View createModernHeader() {
         LinearLayout headerLayout = new LinearLayout(this);
         headerLayout.setOrientation(LinearLayout.HORIZONTAL);
-        headerLayout.setBackgroundColor(Color.parseColor("#2C3E50"));
-        headerLayout.setPadding(30, 30, 30, 30);
+        headerLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.background_card));
+        headerLayout.setPadding(16, 20, 16, 20);
         headerLayout.setGravity(Gravity.CENTER_VERTICAL);
 
-        Button backButton = new Button(this);
-        backButton.setText("‹ رجوع");
-        backButton.setTextColor(Color.WHITE);
-        backButton.setBackgroundColor(Color.TRANSPARENT);
-        backButton.setTextSize(16);
+        // ✅ زوايا منحنية في الأسفل
+        GradientDrawable headerBg = new GradientDrawable();
+        headerBg.setColor(ContextCompat.getColor(this, R.color.background_card));
+        float[] radii = {0, 0, 0, 0, 16, 16, 16, 16}; // فقط الزوايا السفلية
+        headerBg.setCornerRadii(radii);
+        headerLayout.setBackground(headerBg);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            headerLayout.setElevation(4f);
+        }
+
+        // ✅ زر الرجوع مع Ripple Effect
+        LinearLayout backButton = new LinearLayout(this);
+        backButton.setOrientation(LinearLayout.HORIZONTAL);
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setPadding(12, 8, 12, 8);
+        backButton.setClickable(true);
+        backButton.setFocusable(true);
+
+        GradientDrawable backBtnBg = new GradientDrawable();
+        backBtnBg.setColor(ContextCompat.getColor(this, R.color.overlay_light_10));
+        backBtnBg.setCornerRadius(8f);
+
+        // ✅ Ripple Effect
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            RippleDrawable ripple = new RippleDrawable(
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.overlay_light_20)),
+                backBtnBg,
+                null
+            );
+            backButton.setBackground(ripple);
+        } else {
+            backButton.setBackground(backBtnBg);
+        }
+
+        ImageView backIcon = new ImageView(this);
+        try {
+            backIcon.setImageResource(R.drawable.ic_arrow_back);
+        } catch (Exception e) {
+            // Fallback
+        }
+        backIcon.setColorFilter(ContextCompat.getColor(this, R.color.text_primary), PorterDuff.Mode.SRC_IN);
+        backIcon.setLayoutParams(new LinearLayout.LayoutParams(24, 24));
+        backButton.addView(backIcon);
+
+        TextView backText = new TextView(this);
+        backText.setText("رجوع");
+        backText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        backText.setTextSize(14);
+        backText.setPadding(8, 0, 0, 0);
+        backButton.addView(backText);
+
         backButton.setOnClickListener(v -> finish());
         headerLayout.addView(backButton);
 
+        // ✅ العنوان مع أيقونة
+        LinearLayout titleContainer = new LinearLayout(this);
+        titleContainer.setOrientation(LinearLayout.HORIZONTAL);
+        titleContainer.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleContainerParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        titleContainer.setLayoutParams(titleContainerParams);
+
+        ImageView titleIcon = new ImageView(this);
+        try {
+            titleIcon.setImageResource(R.drawable.ic_history);
+        } catch (Exception e) {}
+        titleIcon.setColorFilter(ContextCompat.getColor(this, R.color.btn_records), PorterDuff.Mode.SRC_IN);
+        titleIcon.setLayoutParams(new LinearLayout.LayoutParams(32, 32));
+        titleContainer.addView(titleIcon);
+
         TextView title = new TextView(this);
         title.setText("سجل: " + ownerName);
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(22);
+        title.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        title.setTextSize(20);
         title.setTypeface(null, Typeface.BOLD);
-        title.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-        title.setLayoutParams(titleParams);
-        headerLayout.addView(title);
+        title.setPadding(12, 0, 0, 0);
+        titleContainer.addView(title);
+
+        headerLayout.addView(titleContainer);
 
         return headerLayout;
     }
 
-    private View createSearchAndFilterBar() {
-        LinearLayout searchFilterLayout = new LinearLayout(this);
-        searchFilterLayout.setOrientation(LinearLayout.VERTICAL);
-        searchFilterLayout.setPadding(20, 20, 20, 10);
+    // ==================== SEARCH BAR - محسّن ====================
 
+    private View createSearchBar() {
+        LinearLayout searchContainer = new LinearLayout(this);
+        searchContainer.setOrientation(LinearLayout.VERTICAL);
+        searchContainer.setPadding(16, 16, 16, 8);
+
+        // ✅ حاوية البحث مع أيقونة
+        LinearLayout searchBox = new LinearLayout(this);
+        searchBox.setOrientation(LinearLayout.HORIZONTAL);
+        searchBox.setGravity(Gravity.CENTER_VERTICAL);
+        searchBox.setPadding(16, 12, 16, 12);
+
+        GradientDrawable searchBg = new GradientDrawable();
+        searchBg.setColor(ContextCompat.getColor(this, R.color.background_surface));
+        searchBg.setCornerRadius(12f);
+        searchBg.setStroke(2, ContextCompat.getColor(this, R.color.border_default));
+        searchBox.setBackground(searchBg);
+
+        // أيقونة البحث
+        ImageView searchIcon = new ImageView(this);
+        try {
+            searchIcon.setImageResource(R.drawable.ic_search);
+        } catch (Exception e) {}
+        searchIcon.setColorFilter(ContextCompat.getColor(this, R.color.text_secondary), PorterDuff.Mode.SRC_IN);
+        searchIcon.setLayoutParams(new LinearLayout.LayoutParams(24, 24));
+        searchBox.addView(searchIcon);
+
+        // حقل البحث
         searchInput = new EditText(this);
-        searchInput.setHint("🔎 ابحث هنا...");
-        setDrawableBackground(searchInput, createShape(Color.parseColor("#F0F0F0"), 50, Color.parseColor("#E0E0E0")));
-        searchInput.setPadding(40, 25, 40, 25);
+        searchInput.setHint("ابحث في السجلات...");
+        searchInput.setHintTextColor(ContextCompat.getColor(this, R.color.text_disabled));
+        searchInput.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        searchInput.setBackgroundColor(Color.TRANSPARENT);
+        searchInput.setPadding(16, 0, 16, 0);
+        searchInput.setTextSize(16);
+        searchInput.setSingleLine(true);
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        searchInput.setLayoutParams(inputParams);
+
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -181,31 +290,65 @@ public class RecordsActivity extends Activity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
-        searchFilterLayout.addView(searchInput);
+        searchBox.addView(searchInput);
 
+        // زر مسح البحث (يظهر عند الكتابة)
+        ImageView clearButton = new ImageView(this);
+        try {
+            clearButton.setImageResource(R.drawable.ic_clear);
+        } catch (Exception e) {}
+        clearButton.setColorFilter(ContextCompat.getColor(this, R.color.text_disabled), PorterDuff.Mode.SRC_IN);
+        clearButton.setLayoutParams(new LinearLayout.LayoutParams(24, 24));
+        clearButton.setPadding(8, 8, 8, 8);
+        clearButton.setVisibility(View.GONE);
+        clearButton.setOnClickListener(v -> searchInput.setText(""));
+        searchBox.addView(clearButton);
+
+        // إظهار/إخفاء زر المسح
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                clearButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        searchContainer.addView(searchBox);
+        return searchContainer;
+    }
+
+    // ==================== FILTER BUTTONS - محسّن مع Ripple ====================
+
+    private View createFilterButtons() {
         filterScrollView = new HorizontalScrollView(this);
         filterScrollView.setHorizontalScrollBarEnabled(false);
-        LinearLayout.LayoutParams hsvParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        hsvParams.setMargins(0,20,0,0);
+        LinearLayout.LayoutParams hsvParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        hsvParams.setMargins(0, 0, 0, 12);
         filterScrollView.setLayoutParams(hsvParams);
 
         LinearLayout filterLayout = new LinearLayout(this);
         filterLayout.setOrientation(LinearLayout.HORIZONTAL);
-        filterLayout.setGravity(Gravity.CENTER_VERTICAL);
+        filterLayout.setPadding(16, 0, 16, 0);
 
-        // --- Selection Mode Buttons ---
-        btnSelect = createFilterButton("تحديد", "#8E44AD");
+        // ✅ أزرار محسّنة مع Ripple
+        btnSelect = createModernFilterButton("تحديد", R.color.btn_calculator, R.drawable.ic_check_box);
         btnSelect.setOnClickListener(v -> toggleSelectionMode(true));
 
-        btnCancelSelection = createFilterButton("إلغاء", "#7F8C8D");
+        btnCancelSelection = createModernFilterButton("إلغاء", R.color.text_disabled, R.drawable.ic_close);
         btnCancelSelection.setOnClickListener(v -> toggleSelectionMode(false));
         btnCancelSelection.setVisibility(View.GONE);
 
-        btnSelectAll = createFilterButton("تحديد الكل", "#2980B9");
+        btnSelectAll = createModernFilterButton("تحديد الكل", R.color.btn_records, R.drawable.ic_select_all);
         btnSelectAll.setOnClickListener(v -> selectAllDisplayed());
         btnSelectAll.setVisibility(View.GONE);
 
-        btnDeleteSelected = createFilterButton("حذف المحدد (0)", "#E74C3C");
+        btnDeleteSelected = createModernFilterButton("حذف المحدد (0)", R.color.danger_red, R.drawable.ic_delete);
         btnDeleteSelected.setOnClickListener(v -> {
             String message = "هل أنت متأكد من حذف السجلات المحددة (" + selectedTransactions.size() + ")؟";
             confirmDelete(new ArrayList<>(selectedTransactions), message);
@@ -218,25 +361,365 @@ public class RecordsActivity extends Activity {
         filterLayout.addView(btnDeleteSelected);
 
         filterScrollView.addView(filterLayout);
-        searchFilterLayout.addView(filterScrollView);
-        return searchFilterLayout;
+        return filterScrollView;
     }
 
-    private Button createFilterButton(String text, String color) {
+    private Button createModernFilterButton(String text, int colorResId, int iconResId) {
         Button button = new Button(this);
         button.setText(text);
-        button.setTextSize(14);
+        button.setTextSize(13);
         button.setTextColor(Color.WHITE);
-        button.setPadding(40, 0, 40, 0);
-        setDrawableBackground(button, createShape(Color.parseColor(color), 50, null));
+        button.setTypeface(null, Typeface.BOLD);
+        button.setPadding(20, 0, 20, 0);
+        button.setAllCaps(false);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(ContextCompat.getColor(this, colorResId));
+        bg.setCornerRadius(8f);
+
+        // ✅ Ripple Effect للأزرار
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int rippleColor = ContextCompat.getColor(this, R.color.overlay_light_30);
+            RippleDrawable ripple = new RippleDrawable(
+                ColorStateList.valueOf(rippleColor),
+                bg,
+                null
+            );
+            button.setBackground(ripple);
+            button.setElevation(2f);
+        } else {
+            button.setBackground(bg);
+        }
+
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                100
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            80
         );
-        params.setMarginEnd(15);
+        params.setMarginEnd(12);
         button.setLayoutParams(params);
+
         return button;
     }
+
+    // ==================== RECORD CARDS - محسّن مع Ripple ====================
+
+    private View createRecordCard(final Transaction t) {
+        final LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setClickable(true);
+        card.setFocusable(true);
+
+        int backgroundColor = selectedTransactions.contains(t)
+                ? ContextCompat.getColor(this, R.color.state_selected)
+                : getCardBackgroundColor(t.type);
+
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setColor(backgroundColor);
+        cardBg.setCornerRadius(12f);
+        cardBg.setStroke(2, ContextCompat.getColor(this, R.color.border_light));
+
+        // ✅ Ripple Effect للبطاقات
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int rippleColor = ContextCompat.getColor(this, R.color.overlay_light_20);
+            RippleDrawable ripple = new RippleDrawable(
+                ColorStateList.valueOf(rippleColor),
+                cardBg,
+                null
+            );
+            card.setBackground(ripple);
+            card.setElevation(selectedTransactions.contains(t) ? 6f : 3f);
+        } else {
+            card.setBackground(cardBg);
+        }
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, 12);
+        card.setLayoutParams(params);
+        card.setPadding(16, 16, 16, 16);
+
+        card.setOnClickListener(v -> {
+            if (isInSelectionMode) {
+                if (selectedTransactions.contains(t)) {
+                    selectedTransactions.remove(t);
+                    cardBg.setColor(getCardBackgroundColor(t.type));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        card.setElevation(3f);
+                    }
+                } else {
+                    selectedTransactions.add(t);
+                    cardBg.setColor(ContextCompat.getColor(this, R.color.state_selected));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        card.setElevation(6f);
+                    }
+                }
+
+                // Update ripple with new color
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    int rippleColor = ContextCompat.getColor(this, R.color.overlay_light_20);
+                    RippleDrawable ripple = new RippleDrawable(
+                        ColorStateList.valueOf(rippleColor),
+                        cardBg,
+                        null
+                    );
+                    card.setBackground(ripple);
+                } else {
+                    card.setBackground(cardBg);
+                }
+
+                btnDeleteSelected.setText("حذف المحدد (" + selectedTransactions.size() + ")");
+            }
+        });
+
+        // ✅ Header - النوع والتاريخ
+        card.addView(createCardHeader(t));
+
+        // ✅ Divider
+        card.addView(createDivider());
+
+        // ✅ Body - المبالغ
+        card.addView(createCardBody(t));
+
+        // ✅ Footer - الأزرار
+        if (needsFooter(t)) {
+            card.addView(createCardFooter(t));
+        }
+
+        return card;
+    }
+
+    private View createCardHeader(Transaction t) {
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        // أيقونة النوع
+        ImageView typeIcon = new ImageView(this);
+        typeIcon.setLayoutParams(new LinearLayout.LayoutParams(32, 32));
+        typeIcon.setColorFilter(getTransactionColor(t.type), PorterDuff.Mode.SRC_IN);
+        try {
+            typeIcon.setImageResource(getTransactionIcon(t.type));
+        } catch (Exception e) {}
+
+        GradientDrawable iconBg = new GradientDrawable();
+        iconBg.setColor(ContextCompat.getColor(this, R.color.overlay_light_10));
+        iconBg.setShape(GradientDrawable.OVAL);
+
+        LinearLayout iconContainer = new LinearLayout(this);
+        iconContainer.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
+        iconContainer.setGravity(Gravity.CENTER);
+        iconContainer.setBackground(iconBg);
+        iconContainer.addView(typeIcon);
+        header.addView(iconContainer);
+
+        // نص النوع
+        TextView typeText = new TextView(this);
+        typeText.setText(getTransactionTypeDisplay(t.type));
+        typeText.setTextColor(getTransactionColor(t.type));
+        typeText.setTextSize(16);
+        typeText.setTypeface(null, Typeface.BOLD);
+        typeText.setPadding(12, 0, 0, 0);
+        header.addView(typeText);
+
+        // التاريخ والوقت
+        LinearLayout dateTimeContainer = new LinearLayout(this);
+        dateTimeContainer.setOrientation(LinearLayout.VERTICAL);
+        dateTimeContainer.setGravity(Gravity.END);
+        LinearLayout.LayoutParams dateParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        dateTimeContainer.setLayoutParams(dateParams);
+
+        TextView dateText = new TextView(this);
+        dateText.setText(t.date);
+        dateText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+        dateText.setTextSize(12);
+        dateText.setGravity(Gravity.END);
+        dateTimeContainer.addView(dateText);
+
+        TextView timeText = new TextView(this);
+        timeText.setText(t.time);
+        timeText.setTextColor(ContextCompat.getColor(this, R.color.text_disabled));
+        timeText.setTextSize(11);
+        timeText.setGravity(Gravity.END);
+        dateTimeContainer.addView(timeText);
+
+        header.addView(dateTimeContainer);
+
+        return header;
+    }
+
+    private View createDivider() {
+        View divider = new View(this);
+        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            1
+        );
+        divParams.setMargins(0, 12, 0, 12);
+        divider.setLayoutParams(divParams);
+        divider.setBackgroundColor(ContextCompat.getColor(this, R.color.border_light));
+        return divider;
+    }
+
+    private View createCardBody(Transaction t) {
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+
+        if (t.amountAed > 0) body.addView(createAmountRow("درهم", decimalFormat.format(t.amountAed), R.color.currency_dirham, "🇦🇪"));
+        if (t.amountUsdt > 0) body.addView(createAmountRow("دولار", decimalFormat.format(t.amountUsdt), R.color.currency_dollar, "💵"));
+        if (t.amountYoho > 0) body.addView(createAmountRow("يوهو", yohoDecimalFormat.format(t.amountYoho), R.color.currency_yoho, "🪙"));
+
+        if (!t.details.isEmpty()) {
+            TextView detailsText = new TextView(this);
+            detailsText.setText("📝 " + t.details);
+            detailsText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            detailsText.setTextSize(13);
+            detailsText.setPadding(0, 8, 0, 0);
+            detailsText.setMaxLines(2);
+            detailsText.setEllipsize(TextUtils.TruncateAt.END);
+            body.addView(detailsText);
+        }
+
+        return body;
+    }
+
+    private View createAmountRow(String label, String value, int colorResId, String emoji) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, 4, 0, 4);
+
+        TextView emojiText = new TextView(this);
+        emojiText.setText(emoji);
+        emojiText.setTextSize(18);
+        row.addView(emojiText);
+
+        TextView labelText = new TextView(this);
+        labelText.setText(label);
+        labelText.setTextSize(14);
+        labelText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+        labelText.setPadding(8, 0, 8, 0);
+        row.addView(labelText);
+
+        TextView valueText = new TextView(this);
+        valueText.setText(value);
+        valueText.setTextSize(16);
+        valueText.setTextColor(ContextCompat.getColor(this, colorResId));
+        valueText.setTypeface(null, Typeface.BOLD);
+        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        valueText.setLayoutParams(valueParams);
+        valueText.setGravity(Gravity.END);
+        row.addView(valueText);
+
+        return row;
+    }
+
+    private View createCardFooter(Transaction t) {
+        LinearLayout footer = new LinearLayout(this);
+        footer.setOrientation(LinearLayout.HORIZONTAL);
+        footer.setGravity(Gravity.END);
+        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        footerParams.setMargins(0, 12, 0, 0);
+        footer.setLayoutParams(footerParams);
+
+        if (t.beforeState != null && !t.beforeState.isEmpty()) {
+            Button revertBtn = createFooterButton("تراجع", R.color.warning_orange, R.drawable.ic_undo);
+            revertBtn.setOnClickListener(v -> confirmRevertTransaction(t));
+            footer.addView(revertBtn);
+        }
+
+        if (t.whatsappMessage != null && !t.whatsappMessage.isEmpty()) {
+            Button shareBtn = createFooterButton("مشاركة", R.color.success_green, R.drawable.ic_share);
+            shareBtn.setOnClickListener(v -> sendToWhatsApp(t.whatsappMessage));
+            footer.addView(shareBtn);
+        }
+
+        return footer;
+    }
+
+    private Button createFooterButton(String text, int colorResId, int iconResId) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(12);
+        button.setTextColor(Color.WHITE);
+        button.setAllCaps(false);
+        button.setPadding(16, 8, 16, 8);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(ContextCompat.getColor(this, colorResId));
+        bg.setCornerRadius(6f);
+
+        // ✅ Ripple Effect لأزرار Footer
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int rippleColor = ContextCompat.getColor(this, R.color.overlay_light_30);
+            RippleDrawable ripple = new RippleDrawable(
+                ColorStateList.valueOf(rippleColor),
+                bg,
+                null
+            );
+            button.setBackground(ripple);
+        } else {
+            button.setBackground(bg);
+        }
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMarginStart(8);
+        button.setLayoutParams(params);
+
+        return button;
+    }
+
+    private boolean needsFooter(Transaction t) {
+        return (t.beforeState != null && !t.beforeState.isEmpty()) ||
+               (t.whatsappMessage != null && !t.whatsappMessage.isEmpty());
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    private int getTransactionIcon(String type) {
+        switch (type) {
+            case "add": return R.drawable.ic_add_circle;
+            case "subtract": return R.drawable.ic_remove_circle;
+            case "reset": return R.drawable.ic_restart_alt;
+            case "agent_sale":
+            case "agent_custom_sale":
+            case "group_sale": return R.drawable.ic_trending_up;
+            case "fund_agent_yoho":
+            case "agent_fund": return R.drawable.ic_account_balance_wallet;
+            case "withdraw_agent_yoho": return R.drawable.ic_money_off;
+            case "agent_aed_transfer": return R.drawable.ic_swap_horiz;
+            default: return R.drawable.ic_receipt;
+        }
+    }
+
+    private int getCardBackgroundColor(String type) {
+        switch (type) {
+            case "add":
+            case "agent_sale":
+            case "agent_custom_sale":
+            case "group_sale":
+            case "fund_agent_yoho":
+            case "agent_fund":
+                return ContextCompat.getColor(this, R.color.background_card);
+            case "subtract":
+            case "withdraw_agent_yoho":
+                return ContextCompat.getColor(this, R.color.background_card);
+            default:
+                return ContextCompat.getColor(this, R.color.background_card);
+        }
+    }
+
+    // ==================== الباقي من الكود ====================
 
     private void toggleSelectionMode(boolean enable) {
         isInSelectionMode = enable;
@@ -249,22 +732,20 @@ public class RecordsActivity extends Activity {
             selectedTransactions.clear();
         }
         btnDeleteSelected.setText("حذف المحدد (" + selectedTransactions.size() + ")");
-        filterAndDisplayData(searchInput.getText().toString()); // Refresh view
+        filterAndDisplayData(searchInput.getText().toString());
     }
 
     private void selectAllDisplayed() {
         if (currentlyDisplayedTransactions != null) {
             if(selectedTransactions.size() == currentlyDisplayedTransactions.size()){
-                // If all are selected, deselect all
                 selectedTransactions.clear();
             } else {
-                // Otherwise, select all
                 selectedTransactions.clear();
                 selectedTransactions.addAll(currentlyDisplayedTransactions);
             }
         }
         btnDeleteSelected.setText("حذف المحدد (" + selectedTransactions.size() + ")");
-        filterAndDisplayData(searchInput.getText().toString()); // Refresh view to update selection visuals
+        filterAndDisplayData(searchInput.getText().toString());
     }
 
     private void loadAndDisplayRecords() {
@@ -321,121 +802,32 @@ public class RecordsActivity extends Activity {
         currentlyDisplayedTransactions = transactions;
 
         if (transactions.isEmpty()) {
+            LinearLayout emptyState = new LinearLayout(this);
+            emptyState.setOrientation(LinearLayout.VERTICAL);
+            emptyState.setGravity(Gravity.CENTER);
+            emptyState.setPadding(32, 64, 32, 64);
+
+            TextView emptyIcon = new TextView(this);
+            emptyIcon.setText("📋");
+            emptyIcon.setTextSize(64);
+            emptyIcon.setGravity(Gravity.CENTER);
+            emptyState.addView(emptyIcon);
+
             TextView noRecordsText = new TextView(this);
             noRecordsText.setText("لا توجد سجلات لعرضها");
             noRecordsText.setGravity(Gravity.CENTER);
-            noRecordsText.setPadding(0, 100, 0, 0);
             noRecordsText.setTextSize(18);
-            recordsContainer.addView(noRecordsText);
+            noRecordsText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            noRecordsText.setPadding(0, 16, 0, 0);
+            emptyState.addView(noRecordsText);
+
+            recordsContainer.addView(emptyState);
             return;
         }
 
         for (Transaction t : transactions) {
             recordsContainer.addView(createRecordCard(t));
         }
-    }
-
-    private View createRecordCard(final Transaction t) {
-        final LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-
-        int backgroundColor = selectedTransactions.contains(t)
-                ? Color.parseColor("#A9CCE3")
-                : getCardBackgroundColor(t.type);
-        setDrawableBackground(card, createShape(backgroundColor, 25, null));
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(0, 0, 0, 20);
-        card.setLayoutParams(params);
-        card.setPadding(30, 30, 30, 30);
-
-        card.setOnClickListener(v -> {
-            if (isInSelectionMode) {
-                if (selectedTransactions.contains(t)) {
-                    selectedTransactions.remove(t);
-                    setDrawableBackground(card, createShape(getCardBackgroundColor(t.type), 25, null));
-                } else {
-                    selectedTransactions.add(t);
-                    setDrawableBackground(card, createShape(Color.parseColor("#A9CCE3"), 25, null));
-                }
-                btnDeleteSelected.setText("حذف المحدد (" + selectedTransactions.size() + ")");
-            }
-        });
-
-        LinearLayout header = new LinearLayout(this);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-
-        TextView typeText = new TextView(this);
-        typeText.setText(getTransactionTypeDisplay(t.type));
-        typeText.setTextColor(getTransactionColor(t.type));
-        typeText.setTextSize(18);
-        typeText.setTypeface(null, Typeface.BOLD);
-        header.addView(typeText);
-
-        TextView dateTimeText = new TextView(this);
-        dateTimeText.setText(t.date + "  " + t.time);
-        dateTimeText.setGravity(Gravity.END);
-        dateTimeText.setTextColor(Color.DKGRAY);
-        LinearLayout.LayoutParams dateParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-        dateTimeText.setLayoutParams(dateParams);
-        header.addView(dateTimeText);
-        card.addView(header);
-
-        View divider = new View(this);
-        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2);
-        divParams.setMargins(0, 20, 0, 20);
-        divider.setLayoutParams(divParams);
-        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
-        card.addView(divider);
-
-        LinearLayout body = new LinearLayout(this);
-        body.setOrientation(LinearLayout.VERTICAL);
-
-        if (t.amountAed > 0) body.addView(createAmountRow("AED 🇦🇪", decimalFormat.format(t.amountAed)));
-        if (t.amountUsdt > 0) body.addView(createAmountRow("USDT 💵", decimalFormat.format(t.amountUsdt)));
-        if (t.amountYoho > 0) body.addView(createAmountRow("YOHO 🪙", yohoDecimalFormat.format(t.amountYoho)));
-        if (!t.details.isEmpty()) {
-            TextView detailsText = new TextView(this);
-            detailsText.setText("التفاصيل: " + t.details);
-            detailsText.setTextColor(Color.DKGRAY);
-            detailsText.setPadding(0, 10, 0, 0);
-            body.addView(detailsText);
-        }
-        card.addView(body);
-
-        LinearLayout footer = new LinearLayout(this);
-        footer.setOrientation(LinearLayout.HORIZONTAL);
-        footer.setGravity(Gravity.END);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        footerParams.setMargins(0, 20, 0, 0);
-        footer.setLayoutParams(footerParams);
-
-        if (t.beforeState != null && !t.beforeState.isEmpty()) {
-            Button revertBtn = new Button(this);
-            revertBtn.setText("↪ تراجع");
-            revertBtn.setBackgroundColor(Color.parseColor("#F39C12"));
-            revertBtn.setTextColor(Color.WHITE);
-            LinearLayout.LayoutParams revertParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            revertParams.setMarginEnd(20);
-            revertBtn.setLayoutParams(revertParams);
-            revertBtn.setOnClickListener(v -> confirmRevertTransaction(t));
-            footer.addView(revertBtn);
-        }
-
-        if (t.whatsappMessage != null && !t.whatsappMessage.isEmpty()) {
-            Button shareBtn = new Button(this);
-            shareBtn.setText("مشاركة");
-            shareBtn.setBackgroundColor(Color.parseColor("#25D366"));
-            shareBtn.setTextColor(Color.WHITE);
-            shareBtn.setOnClickListener(v -> sendToWhatsApp(t.whatsappMessage));
-            footer.addView(shareBtn);
-        }
-        card.addView(footer);
-
-        return card;
     }
 
     private boolean transactionMatchesQuery(String query, Transaction t) {
@@ -447,72 +839,39 @@ public class RecordsActivity extends Activity {
                 t.time.contains(query);
     }
 
-    private TextView createAmountRow(String label, String value) {
-        TextView tv = new TextView(this);
-        String text = "<b>" + label + ":</b> " + value;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            tv.setText(Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY));
-        } else {
-            tv.setText(Html.fromHtml(text));
-        }
-        tv.setTextSize(18);
-        tv.setTextColor(Color.BLACK);
-        tv.setPadding(0, 5, 0, 5);
-        return tv;
-    }
-
-    private GradientDrawable createShape(int color, float radius, Integer strokeColor) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setShape(GradientDrawable.RECTANGLE);
-        shape.setColor(color);
-        shape.setCornerRadius(radius);
-        if (strokeColor != null) {
-            shape.setStroke(2, strokeColor);
-        }
-        return shape;
-    }
-
-    private void setDrawableBackground(View view, GradientDrawable drawable) {
-        view.setBackground(drawable);
-    }
-
     private String getTransactionTypeDisplay(String type) {
         switch (type) {
-            case "add": return "➕ إيداع";
-            case "subtract": return "➖ خصم";
-            case "reset": return "🔁 تصفير";
-            case "agent_sale": return "📈 بيع";
-            case "agent_custom_sale": return "✨ بيع مخصص";
-            case "group_sale": return "👥 بيع جماعي";
-            case "fund_agent_yoho": return "🪙 تمويل YOHO";
-            case "withdraw_agent_yoho": return "💸 سحب YOHO";
-            case "agent_aed_transfer": return "➡ تحويل AED";
-            case "agent_fund": return "💰 تمويل وكيل";
+            case "add": return "إيداع";
+            case "subtract": return "خصم";
+            case "reset": return "تصفير";
+            case "agent_sale": return "بيع";
+            case "agent_custom_sale": return "بيع مخصص";
+            case "group_sale": return "بيع جماعي";
+            case "fund_agent_yoho": return "تمويل YOHO";
+            case "withdraw_agent_yoho": return "سحب YOHO";
+            case "agent_aed_transfer": return "تحويل AED";
+            case "agent_fund": return "تمويل وكيل";
             default: return type;
         }
     }
 
     private int getTransactionColor(String type) {
         switch (type) {
-            case "add": case "agent_sale": case "agent_custom_sale": case "group_sale": case "fund_agent_yoho": case "agent_fund":
-                return Color.parseColor("#27AE60");
-            case "subtract": case "withdraw_agent_yoho":
-                return Color.parseColor("#E74C3C");
-            case "reset": case "agent_aed_transfer":
-                return Color.parseColor("#F39C12");
+            case "add":
+            case "agent_sale":
+            case "agent_custom_sale":
+            case "group_sale":
+            case "fund_agent_yoho":
+            case "agent_fund":
+                return ContextCompat.getColor(this, R.color.success_green);
+            case "subtract":
+            case "withdraw_agent_yoho":
+                return ContextCompat.getColor(this, R.color.danger_red);
+            case "reset":
+            case "agent_aed_transfer":
+                return ContextCompat.getColor(this, R.color.warning_orange);
             default:
-                return Color.parseColor("#34495E");
-        }
-    }
-
-    private int getCardBackgroundColor(String type) {
-        switch (type) {
-            case "add": case "agent_sale": case "agent_custom_sale": case "group_sale": case "fund_agent_yoho": case "agent_fund":
-                return Color.parseColor("#E8F5E9");
-            case "subtract": case "withdraw_agent_yoho":
-                return Color.parseColor("#FFEBEE");
-            default:
-                return Color.parseColor("#FFFFFF");
+                return ContextCompat.getColor(this, R.color.text_secondary);
         }
     }
 
@@ -575,7 +934,6 @@ public class RecordsActivity extends Activity {
             preferences.edit().putStringSet(MainActivity.RECORDS_PREFS_KEY, recordsSet).apply();
 
             Toast.makeText(this, "تم التراجع عن المعاملة بنجاح", Toast.LENGTH_LONG).show();
-
             loadAndDisplayRecords();
 
         } catch (Exception e) {
@@ -605,12 +963,10 @@ public class RecordsActivity extends Activity {
         }
 
         allRecords.removeAll(recordsToRemove);
-
         preferences.edit().putStringSet(MainActivity.RECORDS_PREFS_KEY, allRecords).apply();
 
         Toast.makeText(this, "تم حذف " + recordsToRemove.size() + " سجل بنجاح", Toast.LENGTH_LONG).show();
 
-        // Exit selection mode and refresh the data
         toggleSelectionMode(false);
         loadAndDisplayRecords();
     }

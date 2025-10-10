@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ExchangeNEW</string>
+    <string name="quick_calculator_service_description">خدمة الحاسبة السريعة تقوم بحساب العمليات الحسابية البسيطة تلقائياً عند كتابة علامة =</string>
 </resources>

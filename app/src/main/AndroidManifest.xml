@@ -43,6 +43,12 @@
             android:label="ملخص الرسوم البيانية"
             android:parentActivityName=".MainActivity" />
 
+        <!-- نشاط إعدادات الحاسبة السريعة -->
+        <activity
+            android:name=".QuickCalculatorSettingsActivity"
+            android:label="إعدادات الحاسبة السريعة"
+            android:parentActivityName=".MainActivity" />
+
         <!-- خدمة الآلة الحاسبة العائمة -->
         <service
             android:name=".FloatingViewService"

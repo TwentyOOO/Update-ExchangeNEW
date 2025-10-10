@@ -12,9 +12,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -60,6 +62,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -79,10 +82,9 @@ public class MainActivity extends Activity {
     private boolean isActivityActive = false;
     private static final int CODE_DRAW_OVER_OTHER_APP_PERMISSION = 2084;
     private static final Object ACTION_ITEM_MARKER = new Object();
-    private boolean isQuickCalculatorEnabled = false;
 
-    private final double AED_TO_USDT_RATE = 1 / 3.8;
-    private final double USDT_TO_AED_RATE = 3.8 / 1;
+    private final double AED_TO_USDT_RATE = 1 / 3.80;
+    private final double USDT_TO_AED_RATE = 3.80 / 1;
     private final double CUSTOM_SALE_BASE_RATE_265 = 265000.0;
     private final double CUSTOM_SALE_BASE_RATE_260 = 260000.0;
 
@@ -95,8 +97,12 @@ public class MainActivity extends Activity {
     private TextView aedValue, usdtValue, selectedAgentTextView, yohoPriceSelector;
     private TextView agentYohoWalletDisplay, agentAedWalletDisplay;
     private LinearLayout agentWalletLayout;
-    private Button agentCommissionButton, addBtn, subBtn;
+    private Button agentCommissionButton;
     private ImageView usdtIconView;
+
+    // --- UI Helper for Colors and Styles ---
+    private UIHelper uiHelper;
+    private GradientHelper gradientHelper;
     // --- تم تعديل تعريف النوافذ المنبثقة ---
     private ListPopupWindow agentListPopupWindow;
     private ListPopupWindow yohoPricePopupWindow;
@@ -108,7 +114,7 @@ public class MainActivity extends Activity {
     private DecimalFormat decimalFormat, yohoDecimalFormat, whatsappDecimalFormat;
 
     private final double[] yohoPrices = {250000, 255000, 260000, 265000};
-    private final String[] yohoNames = {"التسعيرة الاولى", "التسعيرة الثانية", "التسعيرة الثالثة", "التسعيرة الرابعة"};
+    private final String[] yohoNames = {"التسعيرة 250", "التسعيرة 255", "التسعيرة 260", "التسعيرة 265"};
     private int currentYohoIndex = 0;
 
     private final double[] agentCommissionPrices = {250000, 250000, 250000, 265000, 0, 0};
@@ -146,6 +152,10 @@ public class MainActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        // تهيئة UIHelper و GradientHelper
+        uiHelper = new UIHelper(this);
+        gradientHelper = new GradientHelper(this);
 
         setupFormatting();
         setupUI();
@@ -229,7 +239,10 @@ public class MainActivity extends Activity {
     }
 
     private void setupFormatting() {
+        // استخدام Locale.ENGLISH لضمان ظهور الأرقام بالإنجليزية
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
+        symbols.setGroupingSeparator(',');
+        symbols.setDecimalSeparator('.');
         decimalFormat = new DecimalFormat("#,##0.00", symbols);
         yohoDecimalFormat = new DecimalFormat("#,##0", symbols);
         whatsappDecimalFormat = new DecimalFormat("0.00", symbols);
@@ -250,7 +263,7 @@ public class MainActivity extends Activity {
                 if (!(focusedView instanceof EditText)) return;
                 EditText currentField = (EditText) focusedView;
                 isUpdating = true;
-                
+
                 if (currentField.getId() == aedInput.getId()) {
                     updateCalculationsFromAed(s.toString());
                 } else if (currentField.getId() == usdtInput.getId()) {
@@ -273,7 +286,7 @@ public class MainActivity extends Activity {
                         updateCalculationsFromYoho(s.toString());
                     }
                 }
-                
+
                 isUpdating = false;
             }
         };
@@ -287,7 +300,8 @@ public class MainActivity extends Activity {
     private void setupUI() {
         LinearLayout mainLayout = new LinearLayout(this);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setBackgroundColor(Color.WHITE);
+        // خلفية بسيطة داكنة
+        mainLayout.setBackgroundColor(uiHelper.getBackgroundDark());
         mainLayout.setPadding(0, 0, 0, 0);
 
         mainLayout.addView(createTitleSection());
@@ -310,15 +324,16 @@ public class MainActivity extends Activity {
         contentContainer.addView(yohoInput);
 
         TextView walletTitle = new TextView(this);
-        walletTitle.setText("المحفظة (انقر على الرصيد للتعديل)");
-        walletTitle.setTextSize(18);
-        walletTitle.setTextColor(Color.BLACK);
+        walletTitle.setText(uiHelper.getWalletEmoji() + " المحفظة (انقر على الرصيد للتعديل)");
+        walletTitle.setTextSize(20);
+        walletTitle.setTextColor(uiHelper.getTextPrimary());
         walletTitle.setGravity(Gravity.CENTER);
         walletTitle.setPadding(0, 20, 0, 10);
+        walletTitle.setTypeface(null, Typeface.BOLD);
         contentContainer.addView(walletTitle);
 
         contentContainer.addView(createOldStyleWalletLayout());
-        contentContainer.addView(createBubbleControlButtons());
+        // contentContainer.addView(createBubbleControlButtons()); // ✅ تم حذف شريط الحاسبة العائمة
         contentContainer.addView(createOldStyleActionButtons());
 
         scrollView.addView(contentContainer);
@@ -332,59 +347,123 @@ public class MainActivity extends Activity {
     private LinearLayout createTitleSection() {
         LinearLayout titleSection = new LinearLayout(this);
         titleSection.setOrientation(LinearLayout.VERTICAL);
-        titleSection.setPadding(0, 40, 0, 40);
+        titleSection.setPadding(0, 30, 0, 30);
         titleSection.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        titleSection.setBackgroundColor(Color.BLACK);
+        // خلفية نظيفة وبسيطة
+        titleSection.setBackgroundColor(uiHelper.getBackgroundCard());
 
         TextView title = new TextView(this);
-        title.setText("حاسبة الى يوهو");
-        title.setTextSize(32);
-        title.setTextColor(Color.WHITE);
+        title.setText("🏦 حاسبة اليويوهو");
+        title.setTextSize(24);
+        title.setTextColor(uiHelper.getTextPrimary());
         title.setGravity(Gravity.CENTER);
         title.setTypeface(null, Typeface.BOLD);
         titleSection.addView(title);
 
         TextView subTitle = new TextView(this);
-        subTitle.setText("درهم إماراتي ⇌ الدولار أمريكى");
-        subTitle.setTextSize(24);
-        subTitle.setTextColor(Color.parseColor("#FFBF00"));
+        subTitle.setText("درهم إماراتي ⇌ دولار ⇌ يوهو");
+        subTitle.setTextSize(16);
+        subTitle.setTextColor(uiHelper.getTextSecondary());
         subTitle.setGravity(Gravity.CENTER);
-        subTitle.setTypeface(null, Typeface.BOLD);
-        subTitle.setPadding(0, 10, 0, 0);
+        subTitle.setPadding(0, 8, 0, 0);
         titleSection.addView(subTitle);
         return titleSection;
     }
 
+    // ==================== شريط الأزرار العلوي - محسّن ====================
+
+    /**
+     * إنشاء شريط الأزرار العلوي (تحليل، وكلاء، السجلات، حاسبة، تصفير)
+     */
     private LinearLayout createTopButtonsLayout() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 150));
 
-        LinearLayout chartBtn = createMaterialIconButton(R.drawable.ic_analytics, "تحليل", "#27AE60");
+        // ✅ زيادة الارتفاع لإظهار النص كاملاً
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            130  // ✅ من 120 إلى 130 (مساحة أكبر للنص)
+        ));
+        layout.setPadding(8, 4, 8, 4);  // ✅ تقليل Padding العلوي والسفلي
+        layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
+
+        // ========== 1️⃣ زر التحليل (أخضر) - أصغر ==========
+        LinearLayout chartBtn = createSimpleIconButton(
+            R.drawable.ic_analytics,
+            "تحليل",
+            "#27AE60"
+        );
         chartBtn.setOnClickListener(v -> openChartActivity());
 
-        LinearLayout shippingAgentsBtn = createMaterialIconButton(R.drawable.ic_local_shipping, "وكلاء", "#F39C12");
-        shippingAgentsBtn.setOnClickListener(this::showAgentPopupMenu);
-        shippingAgentsBtn.setOnLongClickListener(v -> {
+        // ✅ تصغير زر التحليل ليكون 0.8 من الحجم العادي
+        LinearLayout.LayoutParams chartParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f  // ✅ weight = 0.8 أصغر من 1.0
+        );
+        chartParams.setMargins(2, 0, 2, 0);
+        chartBtn.setLayoutParams(chartParams);
+
+        // ========== 2️⃣ زر الوكلاء (برتقالي) - أكبر بكثير ==========
+        LinearLayout agentsBtn = createSimpleIconButton(
+            R.drawable.ic_local_shipping,
+            "وكلاء",
+            "#F39C12"
+        );
+        agentsBtn.setOnClickListener(this::showAgentPopupMenu);
+
+        agentsBtn.setOnLongClickListener(v -> {
             isAgentSaleMode = !isAgentSaleMode;
-            v.setBackgroundColor(isAgentSaleMode ? Color.parseColor("#F39C12") : Color.parseColor("#3498DB"));
-            Toast.makeText(MainActivity.this, isAgentSaleMode ? "وضع بيع الوكيل" : "وضع تعديل الوكيل", Toast.LENGTH_SHORT).show();
+            // ✅ تحديث الخلفية مع الزوايا المنحنية
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(Color.parseColor(isAgentSaleMode ? "#F39C12" : "#3498DB"));
+            bg.setCornerRadius(8f);
+            v.setBackground(bg);
+            Toast.makeText(MainActivity.this,
+                isAgentSaleMode ? "وضع بيع الوكيل" : "وضع تعديل الوكيل",
+                Toast.LENGTH_SHORT).show();
             return true;
         });
 
-        LinearLayout recordsBtn = createMaterialIconButton(R.drawable.ic_history, "السجلات", "#3498DB");
+        // ✅ تكبير زر الوكلاء ليكون 1.5 من حجم الأزرار (أكبر من قبل)
+        LinearLayout.LayoutParams agentsParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f  // ✅ weight = 1.5 أكبر بكثير
+        );
+        agentsParams.setMargins(2, 0, 2, 0);
+        agentsBtn.setLayoutParams(agentsParams);
+
+        // ========== 3️⃣ زر السجلات (أزرق) - أصغر ==========
+        LinearLayout recordsBtn = createSimpleIconButton(
+            R.drawable.ic_history,
+            "السجلات",
+            "#3498DB"
+        );
         recordsBtn.setOnClickListener(v -> openRecordsActivity());
 
-        LinearLayout resetBtn = createMaterialIconButton(R.drawable.ic_restart_alt, "تصفير", "#FF6B6B");
+        // ✅ تصغير زر السجلات ليكون 0.8 من الحجم العادي
+        LinearLayout.LayoutParams recordsParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f  // ✅ weight = 0.8 أصغر من 1.0
+        );
+        recordsParams.setMargins(2, 0, 2, 0);
+        recordsBtn.setLayoutParams(recordsParams);
+
+        // ========== 4️⃣ زر التصفير (أحمر) - أصغر ==========
+        LinearLayout resetBtn = createSimpleIconButton(
+            R.drawable.ic_restart_alt,
+            "تصفير",
+            "#FF4757"
+        );
         resetBtn.setOnClickListener(v -> handleReset());
 
-        LinearLayout calculatorBtn = createMaterialIconButton(R.drawable.ic_analytics, "الحاسبة السريعة", "#9C27B0");
-        calculatorBtn.setOnClickListener(v -> toggleQuickCalculator());
+        // ✅ تصغير زر التصفير ليكون 0.6 من حجم الأزرار الأخرى (أصغر من قبل)
+        LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 0.6f  // ✅ weight = 0.6 أصغر من 0.7
+        );
+        resetParams.setMargins(2, 0, 2, 0);
+        resetBtn.setLayoutParams(resetParams);
 
+        // ✅ إضافة الأزرار مع مسافات بينها
         layout.addView(chartBtn);
-        layout.addView(shippingAgentsBtn);
+        layout.addView(agentsBtn);
         layout.addView(recordsBtn);
-        layout.addView(calculatorBtn);
         layout.addView(resetBtn);
 
         return layout;
@@ -394,7 +473,7 @@ public class MainActivity extends Activity {
         LinearLayout buttonLayout = new LinearLayout(this);
         buttonLayout.setOrientation(LinearLayout.VERTICAL);
         buttonLayout.setGravity(Gravity.CENTER);
-        buttonLayout.setPadding(10, 10, 10, 10);
+        buttonLayout.setPadding(15, 15, 15, 15);
         buttonLayout.setBackgroundColor(Color.parseColor(bgColor));
         buttonLayout.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f));
         buttonLayout.setClickable(true);
@@ -402,31 +481,116 @@ public class MainActivity extends Activity {
 
         ImageView iconView = new ImageView(this);
         try { iconView.setImageResource(iconResId); } catch (Exception ignored) {}
-        iconView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
+        iconView.setColorFilter(uiHelper.getTextPrimary(), PorterDuff.Mode.SRC_IN);
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(72, 72));
         buttonLayout.addView(iconView);
 
         TextView labelView = new TextView(this);
         labelView.setText(label);
-        labelView.setTextColor(Color.WHITE);
-        labelView.setTextSize(12);
+        labelView.setTextColor(uiHelper.getTextPrimary());
+        labelView.setTextSize(14);
         labelView.setGravity(Gravity.CENTER);
-        labelView.setPadding(0, 5, 0, 0);
+        labelView.setTypeface(null, Typeface.BOLD);
+        labelView.setPadding(0, 8, 0, 0);
         buttonLayout.addView(labelView);
 
         return buttonLayout;
     }
 
+    // ==================== دالة إنشاء زر - محسّنة بصرياً مع Ripple ====================
+
+    /**
+     * إنشاء زر أيقونة بسيط واحترافي مع تأثير Ripple
+     */
+    // ==================== دالة الزر - محسّنة لإظهار النص كاملاً ====================
+
+    private LinearLayout createSimpleIconButton(int iconResId, String label, String bgColor) {
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.VERTICAL);
+        buttonLayout.setGravity(Gravity.CENTER);
+        buttonLayout.setPadding(6, 8, 6, 8);  // ✅ تقليل Padding أكثر
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f
+        );
+        params.setMargins(2, 0, 2, 0);  // ✅ مسافة صغيرة بين الأزرار
+        buttonLayout.setLayoutParams(params);
+
+        buttonLayout.setClickable(true);
+        buttonLayout.setFocusable(true);
+
+        // زوايا منحنية وظل
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.parseColor(bgColor));
+        background.setCornerRadius(6f);
+        buttonLayout.setBackground(background);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            buttonLayout.setElevation(2f);
+        }
+
+        // ========== الأيقونة - أصغر ==========
+        ImageView iconView = new ImageView(this);
+        try {
+            iconView.setImageResource(iconResId);
+        } catch (Exception ignored) {}
+
+        iconView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(40, 40)); // ✅ من 48 إلى 40
+        iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        buttonLayout.addView(iconView);
+
+        // ========== النص - محسّن ==========
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        labelView.setTextColor(Color.WHITE);
+        labelView.setTextSize(12);  // ✅ من 13 إلى 12
+        labelView.setGravity(Gravity.CENTER);
+        labelView.setTypeface(null, Typeface.BOLD);
+        labelView.setPadding(0, 3, 0, 0);  // ✅ مسافة صغيرة من الأيقونة
+
+        // ✅ ضمان ظهور النص كاملاً
+        labelView.setMaxLines(1);  // ✅ سطر واحد
+        labelView.setEllipsize(android.text.TextUtils.TruncateAt.END);  // ✅ إذا كان طويل جداً يضع ...
+        labelView.setSingleLine(true);  // ✅ سطر واحد فقط
+
+        labelView.setShadowLayer(1.5f, 0f, 0.5f, Color.parseColor("#30000000"));
+
+        // ✅ تأكد من أن TextView يأخذ المساحة المتاحة
+        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        buttonLayout.addView(labelView);
+
+        return buttonLayout;
+    }
+
+    /**
+     * دالة مساعدة لتعديل سطوع اللون
+     */
+    private int adjustBrightness(int color, float factor) {
+        int red = (int) (Color.red(color) * factor);
+        int green = (int) (Color.green(color) * factor);
+        int blue = (int) (Color.blue(color) * factor);
+        return Color.rgb(
+            Math.min(255, red),
+            Math.min(255, green),
+            Math.min(255, blue)
+        );
+    }
 
     private TextView createSelectedAgentTextView() {
         selectedAgentTextView = new TextView(this);
-        selectedAgentTextView.setTextSize(16);
-        selectedAgentTextView.setTextColor(Color.WHITE);
+        selectedAgentTextView.setTextSize(18);
+        selectedAgentTextView.setTextColor(uiHelper.getTextPrimary());
         selectedAgentTextView.setGravity(Gravity.CENTER);
-        selectedAgentTextView.setPadding(20, 15, 20, 15);
+        selectedAgentTextView.setPadding(24, 18, 24, 18);
         selectedAgentTextView.setVisibility(View.GONE);
+        selectedAgentTextView.setTypeface(null, Typeface.BOLD);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 10, 0, 10);
+        params.setMargins(0, 12, 0, 12);
         selectedAgentTextView.setLayoutParams(params);
         selectedAgentTextView.setOnClickListener(v -> resetSelection());
         return selectedAgentTextView;
@@ -443,8 +607,8 @@ public class MainActivity extends Activity {
         LinearLayout yohoDisplayLayout = new LinearLayout(this);
         yohoDisplayLayout.setOrientation(LinearLayout.HORIZONTAL);
         yohoDisplayLayout.setGravity(Gravity.CENTER);
-        yohoDisplayLayout.setBackgroundColor(Color.parseColor("#2C3E50"));
-        yohoDisplayLayout.setPadding(20, 15, 20, 15);
+        yohoDisplayLayout.setBackgroundColor(uiHelper.getBackgroundCard());
+        yohoDisplayLayout.setPadding(24, 18, 24, 18);
         yohoDisplayLayout.setLayoutParams(yohoParams);
         yohoDisplayLayout.setOnClickListener(v -> {
             if (selectedMainAgentName == null) return;
@@ -472,17 +636,18 @@ public class MainActivity extends Activity {
         yohoDisplayLayout.addView(yohoIcon);
 
         agentYohoWalletDisplay = new TextView(this);
-        agentYohoWalletDisplay.setText("YOHO: 0");
-        agentYohoWalletDisplay.setTextColor(Color.WHITE);
-        agentYohoWalletDisplay.setTextSize(16);
+        agentYohoWalletDisplay.setText(uiHelper.getYohoEmoji() + " YOHO: 0");
+        agentYohoWalletDisplay.setTextColor(uiHelper.getTextPrimary());
+        agentYohoWalletDisplay.setTextSize(18);
+        agentYohoWalletDisplay.setTypeface(null, Typeface.BOLD);
         agentYohoWalletDisplay.setTag("yoho_text");
         yohoDisplayLayout.addView(agentYohoWalletDisplay);
 
         final EditText yohoBalanceEditor = new EditText(this);
-        yohoBalanceEditor.setTextSize(16);
+        yohoBalanceEditor.setTextSize(18);
         yohoBalanceEditor.setGravity(Gravity.CENTER);
         yohoBalanceEditor.setBackground(null);
-        yohoBalanceEditor.setTextColor(Color.WHITE);
+        yohoBalanceEditor.setTextColor(uiHelper.getTextPrimary());
         yohoBalanceEditor.setPadding(20, 15, 20, 15);
         yohoBalanceEditor.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         yohoBalanceEditor.setVisibility(View.GONE);
@@ -506,13 +671,12 @@ public class MainActivity extends Activity {
             }
             return false;
         });
-        agentWalletLayout.addView(yohoDisplayLayout);
 
         LinearLayout aedDisplayLayout = new LinearLayout(this);
         aedDisplayLayout.setOrientation(LinearLayout.HORIZONTAL);
         aedDisplayLayout.setGravity(Gravity.CENTER);
-        aedDisplayLayout.setBackgroundColor(Color.parseColor("#16A085"));
-        aedDisplayLayout.setPadding(20, 15, 20, 15);
+        aedDisplayLayout.setBackgroundColor(uiHelper.getAedColor());
+        aedDisplayLayout.setPadding(24, 18, 24, 18);
         aedDisplayLayout.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
         aedDisplayLayout.setOnClickListener(v -> transferAgentAedToMainWallet());
 
@@ -524,11 +688,16 @@ public class MainActivity extends Activity {
         aedDisplayLayout.addView(aedIcon);
 
         agentAedWalletDisplay = new TextView(this);
-        agentAedWalletDisplay.setText("0.00");
-        agentAedWalletDisplay.setTextColor(Color.WHITE);
-        agentAedWalletDisplay.setTextSize(16);
+        agentAedWalletDisplay.setText(uiHelper.getAedEmoji() + " 0.00");
+        agentAedWalletDisplay.setTextColor(uiHelper.getTextPrimary());
+        agentAedWalletDisplay.setTextSize(18);
+        agentAedWalletDisplay.setTypeface(null, Typeface.BOLD);
         aedDisplayLayout.addView(agentAedWalletDisplay);
+
+        // ✅ تبديل الأماكن: AED يسار، YOHO يمين
         agentWalletLayout.addView(aedDisplayLayout);
+        agentWalletLayout.addView(yohoDisplayLayout);
+
         return agentWalletLayout;
     }
 
@@ -539,8 +708,10 @@ public class MainActivity extends Activity {
         editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         editText.setTextSize(size);
         editText.setGravity(Gravity.CENTER);
-        editText.setBackgroundColor(Color.parseColor("#F0F0F0"));
-        editText.setPadding(20, 20, 20, 20);
+        editText.setBackgroundColor(uiHelper.getBackgroundSurface());
+        editText.setTextColor(uiHelper.getTextPrimary());
+        editText.setHintTextColor(uiHelper.getTextHint());
+        editText.setPadding(24, 24, 24, 24);
         if (isBold) {
             editText.setTypeface(null, Typeface.BOLD);
         }
@@ -583,20 +754,22 @@ public class MainActivity extends Activity {
         params.setMargins(15, 30, 15, 0);
         layout.setLayoutParams(params);
         yohoPriceSelector = new TextView(this);
-        yohoPriceSelector.setText("اختر سعر YOHO");
-        yohoPriceSelector.setTextSize(16);
-        yohoPriceSelector.setTextColor(Color.parseColor("#FFBF00"));
+        yohoPriceSelector.setText("📌 اختر سعر YOHO");
+        yohoPriceSelector.setTextSize(18);
+        yohoPriceSelector.setTextColor(uiHelper.getPrimaryGold());
         yohoPriceSelector.setGravity(Gravity.CENTER);
-        yohoPriceSelector.setBackgroundColor(Color.parseColor("#F0F0F0"));
-        yohoPriceSelector.setPadding(20, 20, 20, 20);
+        yohoPriceSelector.setBackgroundColor(uiHelper.getBackgroundSurface());
+        yohoPriceSelector.setTypeface(null, Typeface.BOLD);
+        yohoPriceSelector.setPadding(24, 24, 24, 24);
         yohoPriceSelector.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         yohoPriceSelector.setOnClickListener(this::showYohoPrices);
         agentCommissionButton = new Button(this);
-        agentCommissionButton.setText("سعر العميل");
-        agentCommissionButton.setTextSize(14);
-        agentCommissionButton.setTextColor(Color.WHITE);
-        agentCommissionButton.setBackgroundColor(Color.parseColor("#F39C12"));
-        agentCommissionButton.setPadding(20, 20, 20, 20);
+        agentCommissionButton.setText("💰 سعر العميل");
+        agentCommissionButton.setTextSize(16);
+        agentCommissionButton.setTextColor(uiHelper.getTextPrimary());
+        agentCommissionButton.setBackgroundColor(uiHelper.getWarningOrange());
+        agentCommissionButton.setTypeface(null, Typeface.BOLD);
+        agentCommissionButton.setPadding(24, 24, 24, 24);
         LinearLayout.LayoutParams agentBtnParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
         agentBtnParams.setMarginStart(10);
         agentCommissionButton.setLayoutParams(agentBtnParams);
@@ -645,10 +818,12 @@ public class MainActivity extends Activity {
     private View createEditableBalanceView(final String currency) {
         FrameLayout frameLayout = new FrameLayout(this);
         final TextView balanceText = new TextView(this);
-        balanceText.setTextSize(20);
+        balanceText.setTextSize(22);
         balanceText.setGravity(Gravity.CENTER);
-        balanceText.setBackgroundColor(Color.parseColor("#F8F8F8"));
-        balanceText.setPadding(10, 15, 10, 15);
+        balanceText.setBackgroundColor(uiHelper.getBackgroundCard());
+        balanceText.setTextColor(uiHelper.getTextPrimary());
+        balanceText.setTypeface(null, Typeface.BOLD);
+        balanceText.setPadding(12, 20, 12, 20);
         if (currency.equals("AED")) {
             aedValue = balanceText;
         } else {
@@ -657,10 +832,12 @@ public class MainActivity extends Activity {
         frameLayout.addView(balanceText);
 
         final EditText balanceEditor = new EditText(this);
-        balanceEditor.setTextSize(20);
+        balanceEditor.setTextSize(22);
         balanceEditor.setGravity(Gravity.CENTER);
-        balanceEditor.setBackgroundColor(Color.parseColor("#E0F7FA"));
-        balanceEditor.setPadding(10, 15, 10, 15);
+        balanceEditor.setBackgroundColor(uiHelper.getBackgroundSurface());
+        balanceEditor.setTextColor(uiHelper.getTextPrimary());
+        balanceEditor.setHintTextColor(uiHelper.getTextHint());
+        balanceEditor.setPadding(12, 20, 12, 20);
         balanceEditor.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
         balanceEditor.setVisibility(View.GONE);
         balanceEditor.setImeOptions(EditorInfo.IME_ACTION_DONE);
@@ -697,64 +874,107 @@ public class MainActivity extends Activity {
         return frameLayout;
     }
 
+    // ==================== أزرار الإضافة والخصم - بنفس نمط الأزرار العلوية ====================
     private LinearLayout createOldStyleActionButtons() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(0, 20, 0, 20);
 
-        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(0, 150, 1);
-        btnParams.setMargins(0, 0, 0, 0);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            130  // نفس ارتفاع الأزرار العلوية
+        ));
+        layout.setPadding(8, 4, 8, 4);
 
-        addBtn = new Button(this);
-        addBtn.setText("+ إضافة");
-        addBtn.setBackgroundColor(Color.parseColor("#4CAF50"));
-        addBtn.setTextColor(Color.WHITE);
-        addBtn.setTextSize(16);
-        addBtn.setLayoutParams(btnParams);
-        addBtn.setOnClickListener(v -> handleAddOrSubtract(true));
+        // ✅ خلفية بنفس نمط الشريط العلوي (اختياري)
+        layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
 
-        subBtn = new Button(this);
-        subBtn.setText("- خصم");
-        subBtn.setBackgroundColor(Color.parseColor("#F44336"));
-        subBtn.setTextColor(Color.WHITE);
-        subBtn.setTextSize(16);
-        subBtn.setLayoutParams(btnParams);
-        subBtn.setOnClickListener(v -> handleAddOrSubtract(false));
+        // ========== زر الإضافة - نمط عصري مع أيقونة ==========
+        LinearLayout addButton = createActionButton(
+            "إضافة",
+            "➕",
+            "#4CAF50"  // أخضر
+        );
+        addButton.setOnClickListener(v -> handleAddOrSubtract(true));
 
-        layout.addView(addBtn);
-        layout.addView(subBtn);
+        // ========== زر الخصم - نمط عصري مع أيقونة ==========
+        LinearLayout subButton = createActionButton(
+            "خصم",
+            "➖",
+            "#F44336"  // أحمر
+        );
+        subButton.setOnClickListener(v -> handleAddOrSubtract(false));
+
+        layout.addView(addButton);
+        layout.addView(subButton);
+
         return layout;
     }
 
-    private LinearLayout createBubbleControlButtons() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(10, 40, 10, 10);
+    /**
+     * إنشاء زر إضافة/خصم بنفس نمط الأزرار العلوية
+     */
+    private LinearLayout createActionButton(String label, String emoji, String bgColor) {
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.VERTICAL);
+        buttonLayout.setGravity(Gravity.CENTER);
+        buttonLayout.setPadding(6, 8, 6, 8);
 
-        Button startButton = new Button(this);
-        startButton.setText("تشغيل الآلة الحاسبة العائمة");
-        startButton.setBackgroundColor(Color.parseColor("#1ABC9C"));
-        startButton.setTextColor(Color.WHITE);
-        LinearLayout.LayoutParams startParams = new LinearLayout.LayoutParams(0, 150, 1);
-        startParams.setMarginEnd(10);
-        startButton.setLayoutParams(startParams);
-        startButton.setOnClickListener(v -> checkPermissionAndStartService());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f
+        );
+        params.setMargins(2, 0, 2, 0);  // مسافة صغيرة بين الأزرار
+        buttonLayout.setLayoutParams(params);
 
-        Button stopButton = new Button(this);
-        stopButton.setText("إيقاف الآلة الحاسبة العائمة");
-        stopButton.setBackgroundColor(Color.parseColor("#95A5A6"));
-        stopButton.setTextColor(Color.WHITE);
-        LinearLayout.LayoutParams stopParams = new LinearLayout.LayoutParams(0, 150, 1);
-        stopParams.setMarginStart(10);
-        stopButton.setLayoutParams(stopParams);
-        stopButton.setOnClickListener(v -> stopService(new Intent(MainActivity.this, FloatingViewService.class)));
+        buttonLayout.setClickable(true);
+        buttonLayout.setFocusable(true);
 
-        layout.addView(startButton);
-        layout.addView(stopButton);
-        return layout;
+        // زوايا منحنية وظل
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.parseColor(bgColor));
+        background.setCornerRadius(6f);
+        buttonLayout.setBackground(background);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            buttonLayout.setElevation(2f);
+        }
+
+        // ========== الأيقونة (Emoji) ==========
+        TextView emojiView = new TextView(this);
+        emojiView.setText(emoji);
+        emojiView.setTextSize(28);  // حجم كبير للـ emoji
+        emojiView.setGravity(Gravity.CENTER);
+        emojiView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        buttonLayout.addView(emojiView);
+
+        // ========== النص ==========
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        labelView.setTextColor(Color.WHITE);
+        labelView.setTextSize(14);  // حجم النص
+        labelView.setGravity(Gravity.CENTER);
+        labelView.setTypeface(null, Typeface.BOLD);
+        labelView.setPadding(0, 4, 0, 0);
+
+        labelView.setMaxLines(1);
+        labelView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        labelView.setSingleLine(true);
+
+        labelView.setShadowLayer(1.5f, 0f, 0.5f, Color.parseColor("#30000000"));
+
+        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        buttonLayout.addView(labelView);
+
+        return buttonLayout;
     }
+
+    // ✅ تم حذف createBubbleControlButtons() - لم تعد مستخدمة
 
     private void checkPermissionAndStartService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
@@ -872,7 +1092,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (isCustomGroupSaleActive) return;
-        
+
         // التسعيرات العادية
         double yohoAmount = parseDoubleSafe(yohoStr);
         if (yohoAmount > 0) {
@@ -1053,7 +1273,7 @@ public class MainActivity extends Activity {
             return;
         }
         double baseYoho = (aedAmount / 100.0) * currentCustomRate;
-        
+
         if (currentAgentCommissionIndex == 5) { // تسعيرة مخصصة 260
             if (customerYoho <= 0) {
                 Toast.makeText(this, "الرجاء إدخال مبلغ YOHO للعميل", Toast.LENGTH_LONG).show();
@@ -1215,10 +1435,14 @@ public class MainActivity extends Activity {
     }
 
     private String formatToK(double value) {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
+        symbols.setGroupingSeparator(',');
+        symbols.setDecimalSeparator('.');
+
         if (value < 1000 && value > -1000) {
-            return new DecimalFormat("0.#").format(value);
+            return new DecimalFormat("0.#", symbols).format(value);
         }
-        return new DecimalFormat("0.#K").format(value / 1000.0);
+        return new DecimalFormat("0.#K", symbols).format(value / 1000.0);
     }
 
     private String generateAgentYohoMessage(String type, String fromAgent, double yohoAmount, double newBalance) {
@@ -1261,15 +1485,41 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
-    private void saveTransactionRecord(String type, double amountAed, double amountUsdt, double amountYoho, String owner, String details, String whatsappMessage, String beforeState) {
+    private void saveTransactionRecord(String type, double amountAed, double amountUsdt,
+                                       double amountYoho, String owner, String details,
+                                       String whatsappMessage, String beforeState) {
         long timestamp = System.currentTimeMillis();
-        String date = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(Calendar.getInstance().getTime());
-        String time = new SimpleDateFormat("HH:mm", Locale.ENGLISH).format(Calendar.getInstance().getTime());
-        String record = timestamp + "||" + type + "||" + date + "||" + time + "||" + amountAed + "||" + amountUsdt + "||" + amountYoho + "||" + owner + "||" + details + "||MSG||" + whatsappMessage + "||BEFORE||" + beforeState;
-        Set<String> records = preferences.getStringSet(RECORDS_PREFS_KEY, new HashSet<>());
-        Set<String> newRecords = new HashSet<>(records);
-        newRecords.add(record);
-        preferences.edit().putStringSet(RECORDS_PREFS_KEY, newRecords).apply();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        String date = dateFormat.format(new Date(timestamp));
+        String time = timeFormat.format(new Date(timestamp));
+
+        // ✅ صيغة موحدة ومنظمة
+        String record = timestamp + "||" +
+                        type + "||" +
+                        date + "||" +
+                        time + "||" +
+                        amountAed + "||" +
+                        amountUsdt + "||" +
+                        amountYoho + "||" +
+                        owner + "||" +
+                        details + "||" +
+                        "MSG" + "||" +
+                        whatsappMessage + "||" +
+                        "BEFORE" + "||" +
+                        beforeState;
+
+        // حفظ في SharedPreferences
+        SharedPreferences.Editor editor = preferences.edit();
+        Set<String> records = new HashSet<>(preferences.getStringSet(RECORDS_PREFS_KEY, new HashSet<>()));
+        records.add(record);
+        editor.putStringSet(RECORDS_PREFS_KEY, records);
+        editor.apply();
+
+        // ✅ مهم جداً: طباعة للتأكد من الحفظ
+        Log.d("SAVE_RECORD", "Saved: " + record);
+        Log.d("SAVE_RECORD", "Total records: " + records.size());
     }
 
     private void shareToWhatsApp(String text) {
@@ -1330,24 +1580,24 @@ public class MainActivity extends Activity {
     private void updateWalletDisplay() {
         double aedWallet = parseDoubleSafe(preferences.getString("aed_wallet", "0.0"));
         double usdtWallet = parseDoubleSafe(preferences.getString("usdt_wallet", "0.0"));
-        aedValue.setText(decimalFormat.format(aedWallet));
-        usdtValue.setText(decimalFormat.format(usdtWallet));
-        aedValue.setTextColor(aedWallet < 0 ? Color.RED : Color.parseColor("#FFBF00"));
-        usdtValue.setTextColor(usdtWallet < 0 ? Color.RED : Color.parseColor("#FFBF00"));
+        aedValue.setText(uiHelper.getAedEmoji() + " " + decimalFormat.format(aedWallet));
+        usdtValue.setText(uiHelper.getUsdtEmoji() + " " + decimalFormat.format(usdtWallet));
+        aedValue.setTextColor(aedWallet < 0 ? uiHelper.getErrorRed() : uiHelper.getAedColor());
+        usdtValue.setTextColor(usdtWallet < 0 ? uiHelper.getErrorRed() : uiHelper.getUsdtColor());
     }
 
     private void updateAgentBalanceDisplay() {
         if (selectedMainAgentName != null) {
             Agent agent = getAgentData(selectedMainAgentName);
             if (agent != null) {
-                agentYohoWalletDisplay.setText(yohoDecimalFormat.format(agent.yohoBalance));
-                agentAedWalletDisplay.setText(decimalFormat.format(agent.aedBalance));
+                agentYohoWalletDisplay.setText(uiHelper.getYohoEmoji() + " YOHO: " + yohoDecimalFormat.format(agent.yohoBalance));
+                agentAedWalletDisplay.setText(uiHelper.getAedEmoji() + " " + decimalFormat.format(agent.aedBalance));
                 if (agent.yohoBalance < 0) {
-                    agentYohoWalletDisplay.setTextColor(Color.RED);
+                    agentYohoWalletDisplay.setTextColor(uiHelper.getErrorRed());
                 } else if (agent.yohoBalance > 0) {
-                    agentYohoWalletDisplay.setTextColor(Color.parseColor("#4CAF50"));
+                    agentYohoWalletDisplay.setTextColor(uiHelper.getSuccessGreen());
                 } else {
-                    agentYohoWalletDisplay.setTextColor(Color.WHITE);
+                    agentYohoWalletDisplay.setTextColor(uiHelper.getTextPrimary());
                 }
                 agentWalletLayout.setVisibility(View.VISIBLE);
             }
@@ -1388,8 +1638,8 @@ public class MainActivity extends Activity {
         selectedMainAgentName = agentName;
         isTransferToMemberMode = isTransferToMember;
         if (isTransferToMemberMode) { // Orange "Sale" Mode
-            selectedAgentTextView.setText("👤 بيع عبر الوكيل: " + selectedMainAgentName);
-            selectedAgentTextView.setBackgroundColor(Color.parseColor("#F39C12"));
+            selectedAgentTextView.setText(uiHelper.getAgentEmoji() + " بيع عبر الوكيل: " + selectedMainAgentName);
+            selectedAgentTextView.setBackgroundColor(uiHelper.getButtonAgentSale());
             currentAgentCommissionIndex = 0;
 
             try { usdtIconView.setImageResource(R.drawable.yoho_icon); } catch (Exception ignored) {}
@@ -1398,8 +1648,8 @@ public class MainActivity extends Activity {
             usdtInput.setText("");
 
         } else { // Blue "Modify" Mode
-            selectedAgentTextView.setText("👤 تعديل الوكيل: " + selectedMainAgentName);
-            selectedAgentTextView.setBackgroundColor(Color.parseColor("#3498DB"));
+            selectedAgentTextView.setText(uiHelper.getAgentEmoji() + " تعديل الوكيل: " + selectedMainAgentName);
+            selectedAgentTextView.setBackgroundColor(uiHelper.getButtonAgentAdjust());
             currentAgentCommissionIndex = -1;
 
             try { usdtIconView.setImageResource(R.drawable.usdt_icon); } catch (Exception ignored) {}
@@ -1444,6 +1694,7 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ==================== عرض قائمة أسعار YOHO - محسّنة بصرياً ====================
     private void showYohoPrices(View anchorView) {
         if (!isActivityActive) return;
 
@@ -1459,9 +1710,12 @@ public class MainActivity extends Activity {
         try {
             // إنشاء نافذة جديدة في كل مرة لتجنب المشاكل
             yohoPricePopupWindow = new ListPopupWindow(this);
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, yohoNames);
+
+            // ✅ استخدام Custom Adapter محسّن
+            PriceListAdapter adapter = new PriceListAdapter(this, yohoNames);
             yohoPricePopupWindow.setAdapter(adapter);
-            yohoPricePopupWindow.setModal(true); // جعل النافذة modal لمنع التفاعل مع العناصر خلفها
+            yohoPricePopupWindow.setModal(true);
+
             yohoPricePopupWindow.setOnItemClickListener((parent, view, position, id) -> {
                 if (isActivityActive) {
                     currentYohoIndex = position;
@@ -1469,7 +1723,7 @@ public class MainActivity extends Activity {
                 }
                 dismissAllPopups();
             });
-            
+
             // إضافة إمكانية الإغلاق عند النقر خارج النافذة
             yohoPricePopupWindow.setOnDismissListener(() -> {
                 if (yohoPricePopupWindow != null) {
@@ -1479,9 +1733,21 @@ public class MainActivity extends Activity {
 
             // قم بتكوين وإظهار النافذة
             yohoPricePopupWindow.setAnchorView(anchorView);
-            yohoPricePopupWindow.setWidth(anchorView.getWidth());
+
+            // ✅ عرض محسّن
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int popupWidth = Math.min((int)(anchorView.getWidth() * 1.2), (int)(screenWidth * 0.8));
+            yohoPricePopupWindow.setWidth(popupWidth);
             yohoPricePopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
-            yohoPricePopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+
+            // ✅ خلفية محسّنة
+            GradientDrawable popupBackground = new GradientDrawable();
+            popupBackground.setColor(Color.WHITE);
+            popupBackground.setCornerRadius(12f);
+            popupBackground.setStroke(2, Color.parseColor("#E0E0E0"));
+            yohoPricePopupWindow.setBackgroundDrawable(popupBackground);
+
+            yohoPricePopupWindow.setVerticalOffset(8);
             yohoPricePopupWindow.show();
         } catch (Exception e) {
             Log.e("PopupError", "Error showing yoho prices popup", e);
@@ -1489,6 +1755,7 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ==================== عرض قائمة عمولات الوكلاء - بألوان برتقالية داكنة ====================
     private void showAgentCommissionPrices(View anchorView) {
         if (!isActivityActive) return;
 
@@ -1509,9 +1776,12 @@ public class MainActivity extends Activity {
         try {
             // إنشاء نافذة جديدة في كل مرة لتجنب المشاكل
             agentCommissionPopupWindow = new ListPopupWindow(this);
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, agentCommissionNames);
+
+            // ✅ استخدام Custom Adapter بألوان برتقالية
+            CommissionListAdapter adapter = new CommissionListAdapter(this, agentCommissionNames);
             agentCommissionPopupWindow.setAdapter(adapter);
             agentCommissionPopupWindow.setModal(true);
+
             agentCommissionPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
                 if (isActivityActive) {
                     isCustomGroupSaleActive = false;
@@ -1539,9 +1809,21 @@ public class MainActivity extends Activity {
 
             // قم بتكوين وإظهار النافذة
             agentCommissionPopupWindow.setAnchorView(anchorView);
-            agentCommissionPopupWindow.setWidth(anchorView.getWidth());
+
+            // ✅ عرض محسّن
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int popupWidth = Math.min((int)(anchorView.getWidth() * 1.2), (int)(screenWidth * 0.8));
+            agentCommissionPopupWindow.setWidth(popupWidth);
             agentCommissionPopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
-            agentCommissionPopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+
+            // ✅ خلفية محسّنة بألوان برتقالية
+            GradientDrawable popupBackground = new GradientDrawable();
+            popupBackground.setColor(Color.WHITE);
+            popupBackground.setCornerRadius(12f);
+            popupBackground.setStroke(2, Color.parseColor("#E67E22"));  // حدود برتقالية
+            agentCommissionPopupWindow.setBackgroundDrawable(popupBackground);
+
+            agentCommissionPopupWindow.setVerticalOffset(8);
             agentCommissionPopupWindow.show();
         } catch (Exception e) {
             Log.e("PopupError", "Error showing agent commission popup", e);
@@ -1675,11 +1957,28 @@ public class MainActivity extends Activity {
                 }
             });
 
-            // قم بتكوين وإظهار النافذة
+            // ========== تحسينات الحجم والعرض ==========
             agentListPopupWindow.setAnchorView(anchorView);
-            agentListPopupWindow.setWidth(anchorView.getWidth());
+
+            // ✅ عرض ثابت ومناسب للـ popup - متوسط مثالي
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            // عرض ثابت: 27% من عرض الشاشة مع حد أدنى 165dp وحد أقصى 205dp
+            float density = getResources().getDisplayMetrics().density;
+            int minWidth = (int)(165 * density);  // 165dp (أعرض قليلاً من 150، أقصر من 180)
+            int maxWidth = (int)(205 * density);  // 205dp (أعرض قليلاً من 190، أقصر من 230)
+            int preferredWidth = (int)(screenWidth * 0.27);  // 27% من الشاشة (بين 24% و 30%)
+
+            int popupWidth = Math.max(minWidth, Math.min(preferredWidth, maxWidth));
+            agentListPopupWindow.setWidth(popupWidth);
             agentListPopupWindow.setHeight(ListPopupWindow.WRAP_CONTENT);
-            agentListPopupWindow.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.dialog_holo_light_frame));
+
+            GradientDrawable popupBackground = new GradientDrawable();
+            popupBackground.setColor(Color.WHITE);
+            popupBackground.setCornerRadius(6f); // ✅ زوايا حادة جداً على الأربع جوانب
+            popupBackground.setStroke(2, Color.parseColor("#E0E0E0")); // ✅ حدود أفتح
+            agentListPopupWindow.setBackgroundDrawable(popupBackground);
+
+            agentListPopupWindow.setVerticalOffset(0); // ✅ إزالة الفراغ - متصل بالزر مباشرة
             agentListPopupWindow.show();
         } catch (Exception e) {
             Log.e("PopupError", "Error showing agent list popup", e);
@@ -1920,7 +2219,7 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "تم تحديث رصيد YOHO", Toast.LENGTH_SHORT).show();
     }
 
-    // --- Custom Adapter for the Popup Menu ---
+    // ==================== MENU ADAPTER - المحسّن ====================
     private class MenuAdapter extends ArrayAdapter<Object> {
         private static final int TYPE_AGENT = 0;
         private static final int TYPE_ACTIONS = 1;
@@ -1943,51 +2242,101 @@ public class MainActivity extends Activity {
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
             int type = getItemViewType(position);
+
             if (type == TYPE_AGENT) {
+                // ========== عرض اسم الوكيل - محسّن ==========
                 if (convertView == null) {
                     convertView = LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
                 }
                 TextView textView = convertView.findViewById(android.R.id.text1);
                 textView.setText((String) getItem(position));
-            } else { // TYPE_ACTIONS
+
+                // ✅ تحسينات النص
+                textView.setTextSize(16); // ✅ أصغر من 18
+                textView.setPadding(24, 16, 24, 16); // ✅ أقل من (32, 24, 32, 24)
+                textView.setTextColor(Color.parseColor("#2C3E50"));
+                textView.setTypeface(null, Typeface.BOLD);
+
+            } else { // TYPE_ACTIONS - محسّن بصرياً ✅
                 if (convertView == null) {
                     LinearLayout actionsLayout = new LinearLayout(getContext());
                     actionsLayout.setOrientation(LinearLayout.HORIZONTAL);
                     actionsLayout.setGravity(Gravity.CENTER);
-                    actionsLayout.setPadding(0, 10, 0, 10);
+                    actionsLayout.setPadding(16, 20, 16, 20); // ✅ مسافات أكبر
+                    actionsLayout.setBackgroundColor(Color.parseColor("#F5F5F5")); // ✅ خلفية أوضح
 
+                    // ========== زر إضافة وكيل - ممطط ومحسّن ✅ ==========
                     ImageView addAgentButton = new ImageView(getContext());
-                    LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, 100, 1f);
+                    LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                        0,
+                        120, // ✅ ارتفاع أكبر لملء الـ popup بشكل أفضل
+                        1f
+                    );
+                    buttonParams.setMarginEnd(10); // ✅ مسافة أكبر بين الأزرار
                     addAgentButton.setLayoutParams(buttonParams);
-                    try { addAgentButton.setImageResource(R.drawable.person_add_24); } catch (Exception ignored) {}
-                    addAgentButton.setColorFilter(Color.parseColor("#4CAF50"), PorterDuff.Mode.SRC_IN);
-                    addAgentButton.setPadding(20, 20, 20, 20);
-                    addAgentButton.setBackgroundColor(Color.parseColor("#E0E0E0"));
+
+                    try {
+                        addAgentButton.setImageResource(R.drawable.person_add_24);
+                    } catch (Exception ignored) {}
+
+                    addAgentButton.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+                    addAgentButton.setPadding(24, 24, 24, 24); // ✅ padding أكبر للأيقونة
+
+                    // ✅ خلفية بزوايا منحنية
+                    GradientDrawable addButtonBg = new GradientDrawable();
+                    addButtonBg.setColor(Color.parseColor("#4CAF50"));
+                    addButtonBg.setCornerRadius(16f); // ✅ زوايا أكثر انحناءً
+                    addAgentButton.setBackground(addButtonBg);
+
+                    addAgentButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        addAgentButton.setElevation(6f); // ✅ ظل أقوى
+                    }
+
                     addAgentButton.setOnClickListener(v -> {
                         showAddAgentDialog();
-                        // أغلق النافذة المنبثقة الحالية
                         if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
                             agentListPopupWindow.dismiss();
                         }
                     });
                     actionsLayout.addView(addAgentButton);
 
+                    // ========== زر حذف وكيل - ممطط ومحسّن ✅ ==========
                     ImageView deleteAgentButton = new ImageView(getContext());
-                    LinearLayout.LayoutParams deleteButtonParams = new LinearLayout.LayoutParams(0, 100, 1f);
-                    deleteButtonParams.setMarginStart(10);
+                    LinearLayout.LayoutParams deleteButtonParams = new LinearLayout.LayoutParams(
+                        0,
+                        120, // ✅ ارتفاع أكبر لملء الـ popup بشكل أفضل
+                        1f
+                    );
+                    deleteButtonParams.setMarginStart(10); // ✅ مسافة أكبر بين الأزرار
                     deleteAgentButton.setLayoutParams(deleteButtonParams);
-                    try { deleteAgentButton.setImageResource(R.drawable.person_remove_24); } catch (Exception ignored) {}
-                    deleteAgentButton.setColorFilter(Color.parseColor("#F44336"), PorterDuff.Mode.SRC_IN);
-                    deleteAgentButton.setPadding(20, 20, 20, 20);
-                    deleteAgentButton.setBackgroundColor(Color.parseColor("#E0E0E0"));
+
+                    try {
+                        deleteAgentButton.setImageResource(R.drawable.person_remove_24);
+                    } catch (Exception ignored) {}
+
+                    deleteAgentButton.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+                    deleteAgentButton.setPadding(24, 24, 24, 24); // ✅ padding أكبر للأيقونة
+
+                    // ✅ خلفية بزوايا منحنية
+                    GradientDrawable deleteButtonBg = new GradientDrawable();
+                    deleteButtonBg.setColor(Color.parseColor("#F44336"));
+                    deleteButtonBg.setCornerRadius(16f); // ✅ زوايا أكثر انحناءً
+                    deleteAgentButton.setBackground(deleteButtonBg);
+
+                    deleteAgentButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        deleteAgentButton.setElevation(6f); // ✅ ظل أقوى
+                    }
+
                     deleteAgentButton.setOnClickListener(v -> {
                         showDeleteAgentDialog();
-                        // أغلق النافذة المنبثقة الحالية
                         if (agentListPopupWindow != null && agentListPopupWindow.isShowing()) {
                             agentListPopupWindow.dismiss();
                         }
                     });
                     actionsLayout.addView(deleteAgentButton);
+
                     convertView = actionsLayout;
                 }
             }
@@ -2048,14 +2397,6 @@ public class MainActivity extends Activity {
                 .show();
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private void toggleQuickCalculator() {
-        new AlertDialog.Builder(this)
-            .setTitle("الحاسبة السريعة")
-            .setMessage("سيتم إطلاق هذه الميزة قريباً!\n\nStay tuned!")
-            .setPositiveButton("حسناً", null)
-            .show();
-    }
 
     private boolean isAccessibilityServiceEnabled() {
         String serviceName = getPackageName() + "/" + QuickCalculatorService.class.getCanonicalName();

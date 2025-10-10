@@ -1,0 +1,216 @@
+═══════════════════════════════════════════════════════════════════
+   دليل استخدام الخلفيات المخصصة في ExchangeNEW
+═══════════════════════════════════════════════════════════════════
+
+تم إنشاء 3 ملفات جديدة:
+✅ CustomBackgroundView.java      - خلفية مع رسومات متقدمة
+✅ GradientBackgroundView.java    - خلفية بتدرجات لونية
+✅ BackgroundHelper.java          - مساعد لإنشاء خلفيات بسيطة
+
+═══════════════════════════════════════════════════════════════════
+📌 الطريقة 1: استخدام CustomBackgroundView (رسومات مخصصة)
+═══════════════════════════════════════════════════════════════════
+
+في MainActivity.java، داخل onCreate():
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // إنشاء الخلفية المخصصة
+        FrameLayout container = new FrameLayout(this);
+
+        // 1. إضافة الخلفية
+        CustomBackgroundView backgroundView = new CustomBackgroundView(this);
+        container.addView(backgroundView, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        // 2. إضافة المحتوى الأساسي فوق الخلفية
+        LinearLayout mainLayout = createMainLayout();  // المحتوى الحالي
+        container.addView(mainLayout);
+
+        // 3. تعيين الـ container كمحتوى
+        setContentView(container);
+    }
+
+الميزات:
+- دوائر زخرفية شفافة
+- موجات في الأعلى
+- شبكة نقاط خفيفة
+- خطوط قطرية
+
+═══════════════════════════════════════════════════════════════════
+📌 الطريقة 2: استخدام GradientBackgroundView (تدرجات)
+═══════════════════════════════════════════════════════════════════
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        FrameLayout container = new FrameLayout(this);
+
+        // تدرج لوني كخلفية
+        GradientBackgroundView gradientBg = new GradientBackgroundView(this);
+        container.addView(gradientBg, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        LinearLayout mainLayout = createMainLayout();
+        container.addView(mainLayout);
+
+        setContentView(container);
+    }
+
+الميزات:
+- تدرج خطي من أعلى لأسفل
+- تدرج دائري (Radial) للتأثيرات الضوئية
+- تدرجات متعددة الألوان
+
+═══════════════════════════════════════════════════════════════════
+📌 الطريقة 3: استخدام BackgroundHelper (الأسهل!)
+═══════════════════════════════════════════════════════════════════
+
+في MainActivity.java:
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        LinearLayout mainLayout = createMainLayout();
+
+        // ✅ تطبيق خلفية بتدرج بسيط
+        mainLayout.setBackground(BackgroundHelper.createSimpleGradient());
+
+        // أو خلفية بزوايا منحنية:
+        // mainLayout.setBackground(BackgroundHelper.createRoundedGradient(16f));
+
+        // أو خلفية متعددة الطبقات:
+        // mainLayout.setBackground(BackgroundHelper.createLayeredBackground());
+
+        setContentView(mainLayout);
+    }
+
+═══════════════════════════════════════════════════════════════════
+📌 الطريقة 4: تطبيق مباشر على View موجود
+═══════════════════════════════════════════════════════════════════
+
+إذا كان لديك LinearLayout رئيسي في XML:
+
+    LinearLayout mainLayout = findViewById(R.id.main_layout);
+    mainLayout.setBackground(BackgroundHelper.createSimpleGradient());
+
+═══════════════════════════════════════════════════════════════════
+📌 تخصيص الرسومات في CustomBackgroundView
+═══════════════════════════════════════════════════════════════════
+
+افتح CustomBackgroundView.java وعدّل:
+
+1. تغيير ألوان الدوائر:
+   في drawDecorativeCircles():
+   circlePaint.setColor(Color.parseColor("#YOUR_COLOR"));
+
+2. تعديل عدد النقاط:
+   في drawDotGrid():
+   int spacing = 50;  // غيّر هذا الرقم
+
+3. إضافة أشكال جديدة:
+   استدعِ drawCustomShapes() في onDraw()
+
+4. تغيير الموجات:
+   عدّل wavePath في drawTopWaves()
+
+═══════════════════════════════════════════════════════════════════
+📌 أمثلة إضافية - رسم نص على الخلفية
+═══════════════════════════════════════════════════════════════════
+
+في CustomBackgroundView.java، أضف:
+
+    private void drawTextWatermark(Canvas canvas, int width, int height) {
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.parseColor("#10FFFFFF"));
+        textPaint.setTextSize(100);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setAlpha(30);  // شفافية
+
+        canvas.save();
+        canvas.rotate(-45, width / 2, height / 2);  // دوران
+        canvas.drawText("ExchangeNEW", width / 2, height / 2, textPaint);
+        canvas.restore();
+    }
+
+ثم استدعها في onDraw():
+    drawTextWatermark(canvas, width, height);
+
+═══════════════════════════════════════════════════════════════════
+📌 رسم صور/أيقونات كخلفية
+═══════════════════════════════════════════════════════════════════
+
+    private void drawIconBackground(Canvas canvas, int width, int height) {
+        Drawable icon = getResources().getDrawable(R.drawable.ic_analytics);
+        icon.setAlpha(20);  // شفافية
+        icon.setBounds(width - 200, height - 200, width - 50, height - 50);
+        icon.draw(canvas);
+    }
+
+═══════════════════════════════════════════════════════════════════
+📌 أنماط متقدمة - Pattern/Texture
+═══════════════════════════════════════════════════════════════════
+
+    private void drawHexagonPattern(Canvas canvas, int width, int height) {
+        Paint hexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        hexPaint.setStyle(Paint.Style.STROKE);
+        hexPaint.setStrokeWidth(2);
+        hexPaint.setColor(Color.parseColor("#10FFFFFF"));
+
+        int size = 50;
+        for (int y = 0; y < height; y += size * 1.5) {
+            for (int x = 0; x < width; x += size * 2) {
+                drawHexagon(canvas, x, y, size, hexPaint);
+            }
+        }
+    }
+
+    private void drawHexagon(Canvas canvas, float x, float y, int size, Paint paint) {
+        Path hexPath = new Path();
+        for (int i = 0; i < 6; i++) {
+            double angle = Math.PI / 3 * i;
+            float px = x + size * (float) Math.cos(angle);
+            float py = y + size * (float) Math.sin(angle);
+            if (i == 0) {
+                hexPath.moveTo(px, py);
+            } else {
+                hexPath.lineTo(px, py);
+            }
+        }
+        hexPath.close();
+        canvas.drawPath(hexPath, paint);
+    }
+
+═══════════════════════════════════════════════════════════════════
+📌 الخلاصة - الطريقة الموصى بها
+═══════════════════════════════════════════════════════════════════
+
+للبساطة:
+✅ استخدم BackgroundHelper.createSimpleGradient()
+
+للرسومات المتقدمة:
+✅ استخدم CustomBackgroundView
+
+للتدرجات المعقدة:
+✅ استخدم GradientBackgroundView
+
+═══════════════════════════════════════════════════════════════════
+📌 ملاحظات مهمة
+═══════════════════════════════════════════════════════════════════
+
+⚠️ الأداء: الرسومات المعقدة قد تؤثر على الأداء
+   - استخدم setLayerType(LAYER_TYPE_HARDWARE, null) للتسريع
+
+⚠️ الألوان: استخدم الشفافية (#10FFFFFF) لتجنب تغطية المحتوى
+
+⚠️ التوافق: بعض الميزات تتطلب API 21+ (Android 5.0)
+
+═══════════════════════════════════════════════════════════════════

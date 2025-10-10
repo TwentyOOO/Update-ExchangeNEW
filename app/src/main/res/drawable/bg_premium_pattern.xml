@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- الخلفية بتدرج -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="800dp"
+                android:centerX="0.3"
+                android:centerY="0.3"
+                android:startColor="#1e2339"
+                android:centerColor="#1a1d2e"
+                android:endColor="#16192b"/>
+        </shape>
+    </item>
+    
+    <!-- دائرة كبيرة في الأعلى اليسار -->
+    <item
+        android:top="-180dp"
+        android:left="-180dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="250dp"
+                android:startColor="#143498DB"
+                android:centerColor="#0A3498DB"
+                android:endColor="#00000000"/>
+            <size android:width="500dp" android:height="500dp"/>
+        </shape>
+    </item>
+    
+    <!-- دائرة متوسطة في الأعلى اليمين -->
+    <item
+        android:top="-100dp"
+        android:right="-100dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="150dp"
+                android:startColor="#149C27B0"
+                android:centerColor="#0A9C27B0"
+                android:endColor="#00000000"/>
+            <size android:width="300dp" android:height="300dp"/>
+        </shape>
+    </item>
+    
+    <!-- دائرة في الأسفل اليسار -->
+    <item
+        android:bottom="-150dp"
+        android:left="-100dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="180dp"
+                android:startColor="#1427AE60"
+                android:centerColor="#0A27AE60"
+                android:endColor="#00000000"/>
+            <size android:width="400dp" android:height="400dp"/>
+        </shape>
+    </item>
+    
+    <!-- دائرة في الأسفل اليمين -->
+    <item
+        android:bottom="-120dp"
+        android:right="-120dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="160dp"
+                android:startColor="#14F39C12"
+                android:centerColor="#0AF39C12"
+                android:endColor="#00000000"/>
+            <size android:width="350dp" android:height="350dp"/>
+        </shape>
+    </item>
+    
+    <!-- نقاط صغيرة متناثرة -->
+    <item android:top="150dp" android:left="80dp">
+        <shape android:shape="oval">
+            <solid android:color="#1AFFFFFF"/>
+            <size android:width="40dp" android:height="40dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="300dp" android:right="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#14FFFFFF"/>
+            <size android:width="30dp" android:height="30dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="250dp" android:left="150dp">
+        <shape android:shape="oval">
+            <solid android:color="#0FFFFFFF"/>
+            <size android:width="25dp" android:height="25dp"/>
+        </shape>
+    </item>
+    
+</layer-list>
+

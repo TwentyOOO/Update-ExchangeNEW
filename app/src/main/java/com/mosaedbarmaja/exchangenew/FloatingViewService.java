@@ -58,9 +58,10 @@ public class FloatingViewService extends Service {
     // --- Data & State ---
     private SharedPreferences preferences;
     private boolean isUpdating = false;
-    private final double AED_TO_USDT_RATE = 26.60 / 100.0;
-    private final double USDT_TO_AED_RATE = 100.0 / 26.60;
-    private final double CUSTOM_SALE_BASE_RATE = 265000.0;
+    private final double AED_TO_USDT_RATE = 1 / 3.7594;
+    private final double USDT_TO_AED_RATE = 3.7594 / 1;
+    private final double CUSTOM_SALE_BASE_RATE_265 = 265000.0;
+    private final double CUSTOM_SALE_BASE_RATE_260 = 260000.0;
     private final double[] yohoPrices = {250000, 255000, 260000, 265000};
     private final String[] yohoNames = {"التسعيرة الاولى", "التسعيرة الثانية", "التسعيرة الثالثة", "التسعيرة الرابعة"};
     private int currentYohoIndex = 0;
@@ -744,7 +745,7 @@ public class FloatingViewService extends Service {
                     usdtInput.setText("");
                 } else if (isCustomCommissionSale) {
                     double customerYoho = parseDoubleSafe(yohoInput.getText().toString());
-                    double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE;
+                    double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE_265;
                     double commission = baseYoho - customerYoho;
                     usdtInput.setText(yohoDecimalFormat.format(commission));
                 } else {
@@ -1135,7 +1136,7 @@ public class FloatingViewService extends Service {
 
         String beforeState = agent.yohoBalance + "|" + agent.aedBalance;
 
-        double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE;
+        double baseYoho = (aedAmount / 100.0) * CUSTOM_SALE_BASE_RATE_260;
         double agentCommission = baseYoho - customerYoho;
 
         if (agentCommission < 0) {
