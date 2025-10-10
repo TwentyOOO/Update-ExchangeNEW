@@ -952,7 +952,7 @@ public class MainActivity extends Activity {
 
         layout.setLayoutParams(new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
-            160  // ✅ ارتفاع أكبر لعرض النص الطويل
+            180  // ✅ ارتفاع أكبر لعرض النص الطويل بوضوح
         ));
         layout.setPadding(8, 4, 8, 4);
 
@@ -1026,10 +1026,10 @@ public class MainActivity extends Activity {
         TextView labelView = new TextView(this);
         labelView.setText(label);
         labelView.setTextColor(Color.WHITE);
-        labelView.setTextSize(13);  // ✅ حجم أكبر قليلاً
+        labelView.setTextSize(15);  // ✅ حجم أكبر وأوضح
         labelView.setGravity(Gravity.CENTER);
         labelView.setTypeface(null, Typeface.BOLD);
-        labelView.setPadding(0, 4, 0, 0);
+        labelView.setPadding(4, 6, 4, 0);  // ✅ مساحة أكبر من الجوانب
 
         labelView.setMaxLines(2);  // ✅ السماح بسطرين
         labelView.setEllipsize(android.text.TextUtils.TruncateAt.END);
