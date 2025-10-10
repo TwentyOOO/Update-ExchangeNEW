@@ -1,7 +1,6 @@
 {
-  "latestVersionCode": 7,
-  "apkUrl": "https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release-enhanced-ui.apk",
-  "lastUpdated": "2025-10-10T15:15:00Z",
-  "updateNotes": "إضافة Dark Mode: الوضع الفاتح (أبيض) افتراضياً، مع إمكانية التبديل للوضع الداكن عبر زر صغير في الأعلى 🌙☀",
-  "isUIUpdate": true
+  "versionCode": 8,
+  "versionName": "1.0.8",
+  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.8/app-release.apk",
+  "releaseNotes": "Version 8: UI improvements - Reduced spacing and icon layout updates\n\n✅ Vertical layout for wallet icons (icons above numbers)\n✅ Larger icons: 64×64 pixels\n✅ Reduced spacing throughout the interface\n✅ Text-only action buttons\n✅ Compact and optimized layout"
 }
