@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- الخلفية الأساسية بتدرج -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#1a1d2e"
+                android:centerColor="#1e2339"
+                android:endColor="#242837"/>
+        </shape>
+    </item>
+    
+    <!-- دوائر كبيرة متداخلة -->
+    <item
+        android:top="-100dp"
+        android:left="-50dp">
+        <shape android:shape="oval">
+            <solid android:color="#0F3498DB"/>
+            <size android:width="300dp" android:height="300dp"/>
+        </shape>
+    </item>
+    
+    <item
+        android:bottom="-120dp"
+        android:right="-80dp">
+        <shape android:shape="oval">
+            <solid android:color="#0F9C27B0"/>
+            <size android:width="320dp" android:height="320dp"/>
+        </shape>
+    </item>
+    
+</layer-list>
+

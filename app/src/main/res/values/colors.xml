@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ========== ألوان الخلفيات الرئيسية (Dark Mode) ========== -->
+
+    <!-- الخلفية الرئيسية للتطبيق (أزرق داكن جداً) -->
+    <color name="background_dark">#1a1d2e</color>          <!-- ⭐ Midnight Blue -->
+
+    <!-- خلفية الكروت/البطاقات (أفتح قليلاً) -->
+    <color name="background_card">#242837</color>          <!-- أزرق داكن متوسط -->
+
+    <!-- خلفية الأسطح/الحقول (للـ Input Fields) -->
+    <color name="background_surface">#2d3548</color>       <!-- أزرق رمادي -->
+
+    <!-- خلفية داكنة بديلة (احترافية) -->
+    <color name="dark_bg">#2c3e50</color>                  <!-- Prussian Blue -->
+
+    <!-- خلفية فاتحة (للـ Light Mode) -->
+    <color name="background_light">#F4F6F9</color>
+
+    <!-- ========== ألوان شريط الأزرار العلوي ========== -->
+
+    <!-- زر التحليل (أخضر) -->
+    <color name="btn_analytics">#27AE60</color>
+
+    <!-- زر الوكلاء (برتقالي) -->
+    <color name="btn_agents">#F39C12</color>
+
+    <!-- زر السجلات (أزرق) -->
+    <color name="btn_records">#3498DB</color>
+
+    <!-- زر الحاسبة (بنفسجي) -->
+    <color name="btn_calculator">#9C27B0</color>
+
+    <!-- زر التصفير (أحمر) -->
+    <color name="btn_reset">#FF4757</color>
+
+    <!-- ========== ألوان الأزرار الوظيفية ========== -->
+
+    <!-- أخضر - للنجاح/الإضافة -->
+    <color name="success_green">#4CAF50</color>
+    <color name="success_green_dark">#388E3C</color>
+
+    <!-- أحمر - للحذف/الخطر -->
+    <color name="danger_red">#F44336</color>
+    <color name="danger_red_dark">#D32F2F</color>
+
+    <!-- برتقالي - للتحذير -->
+    <color name="warning_orange">#FF9800</color>
+    <color name="warning_orange_dark">#F57C00</color>
+
+    <!-- أزرق - للمعلومات -->
+    <color name="info_blue">#2196F3</color>
+    <color name="info_blue_dark">#1976D2</color>
+
+    <!-- ========== ألوان النصوص ========== -->
+
+    <!-- نص رئيسي (أبيض) -->
+    <color name="text_primary">#FFFFFF</color>
+
+    <!-- نص ثانوي (رمادي فاتح) -->
+    <color name="text_secondary">#B8C1EC</color>
+
+    <!-- نص معطّل/Disabled -->
+    <color name="text_disabled">#6B7280</color>
+
+    <!-- نص على خلفية فاتحة -->
+    <color name="text_on_light">#1F2937</color>
+
+    <!-- ========== ألوان الحدود والفواصل ========== -->
+
+    <!-- حدود العناصر (رمادي داكن) -->
+    <color name="border_default">#2d3548</color>
+
+    <!-- حدود فاتحة (للتمييز) -->
+    <color name="border_light">#3f4458</color>
+
+    <!-- خط فاصل -->
+    <color name="divider">#1F2937</color>
+
+    <!-- ========== ألوان العملات (خاصة بتطبيقك) ========== -->
+
+    <!-- لون رمز الدرهم (ذهبي/أصفر) -->
+    <color name="currency_dirham">#FFD700</color>
+
+    <!-- لون رمز الدولار (أخضر) -->
+    <color name="currency_dollar">#2ECC71</color>
+
+    <!-- لون رمز اليوهو (cyan/تركواز) -->
+    <color name="currency_yoho">#00CED1</color>
+
+    <!-- ========== ألوان أساسية ========== -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- ========== ألوان الأزرق الحديدي الداكن (Steel Blue) ========== -->
+
+    <!-- أزرق حديدي داكن جداً (Steel Blue) -->
+    <color name="steel_blue_dark">#1c2833</color>        <!-- أزرق رصاصي داكن -->
+    <color name="steel_blue_darker">#17202a</color>      <!-- أغمق -->
+    <color name="gunmetal_blue">#1a252f</color>          <!-- أزرق حديدي -->
+    <color name="slate_gray_blue">#1e2936</color>        <!-- أزرق إردوازي -->
+
+    <!-- طبقة شفافة زرقاء (Blue Overlays) -->
+    <color name="blue_overlay_light">#0A3498DB</color>   <!-- أزرق شفاف 4% -->
+    <color name="blue_overlay_medium">#143498DB</color>  <!-- أزرق شفاف 8% -->
+    <color name="blue_overlay_strong">#1F3498DB</color>  <!-- أزرق شفاف 12% -->
+    <color name="blue_overlay_ultra">#053498DB</color>   <!-- أزرق شفاف 2% -->
+    <color name="blue_overlay_heavy">#293498DB</color>   <!-- أزرق شفاف 16% -->
+
+    <!-- ========== ألوان الشفافية (Overlays) ========== -->
+
+    <!-- أسود شفاف للخلفيات المعتمة -->
+    <color name="overlay_dark_80">#CC000000</color>      <!-- 80% -->
+    <color name="overlay_dark_50">#80000000</color>      <!-- 50% -->
+    <color name="overlay_dark_30">#4D000000</color>      <!-- 30% -->
+    <color name="overlay_dark_10">#1A000000</color>      <!-- 10% -->
+
+    <!-- أبيض شفاف للتأثيرات الضوئية -->
+    <color name="overlay_light_50">#80FFFFFF</color>     <!-- 50% -->
+    <color name="overlay_light_30">#4DFFFFFF</color>     <!-- 30% -->
+    <color name="overlay_light_25">#40FFFFFF</color>     <!-- 25% -->
+    <color name="overlay_light_20">#33FFFFFF</color>     <!-- 20% -->
+    <color name="overlay_light_10">#1AFFFFFF</color>     <!-- 10% -->
+
+    <!-- ========== ألوان الحالات (States) ========== -->
+
+    <!-- حالة الضغط/Pressed -->
+    <color name="state_pressed">#20FFFFFF</color>
+
+    <!-- حالة التركيز/Focused -->
+    <color name="state_focused">#10FFFFFF</color>
+
+    <!-- حالة التحديد/Selected -->
+    <color name="state_selected">#30FFFFFF</color>
+
+    <!-- حالة التعطيل/Disabled -->
+    <color name="state_disabled">#50000000</color>
+
+    <!-- ========== ألوان خاصة بالـ Popup ========== -->
+
+    <!-- خلفية الـ Popup -->
+    <color name="popup_background">#FFFFFF</color>
+
+    <!-- حدود الـ Popup -->
+    <color name="popup_border">#E0E0E0</color>
+
+    <!-- خلفية عناصر الـ Popup (رمادي فاتح جداً) -->
+    <color name="popup_item_background">#FAFAFA</color>
+
+    <!-- ========== ألوان الظلال (Shadows) ========== -->
+
+    <!-- ظل خفيف -->
+    <color name="shadow_light">#30000000</color>
+
+    <!-- ظل متوسط -->
+    <color name="shadow_medium">#50000000</color>
+
+    <!-- ظل قوي -->
+    <color name="shadow_strong">#80000000</color>
+
+    <!-- ========== ألوان قديمة (للتوافق) ========== -->
+
+    <!-- الألوان الأساسية القديمة -->
+    <color name="primary_gold">#FFD700</color>
+    <color name="primary_gold_dark">#FFC107</color>
+    <color name="accent_blue">#64B5F6</color>
+    <color name="accent_purple">#9C27B0</color>
+
+    <!-- ألوان النصوص القديمة -->
+    <color name="text_hint">#707080</color>
+
+    <!-- ألوان العمليات القديمة -->
+    <color name="error_red">#FF4757</color>
+
+    <!-- ألوان العملات القديمة -->
+    <color name="aed_color">#00D9A3</color>
+    <color name="usdt_color">#26A69A</color>
+    <color name="yoho_color">#FFD700</color>
+
+    <!-- ألوان الأزرار القديمة -->
+    <color name="button_add">#00D9A3</color>
+    <color name="button_subtract">#FF4757</color>
+    <color name="button_neutral">#64B5F6</color>
+    <color name="button_agent_sale">#FF9800</color>
+    <color name="button_agent_adjust">#2196F3</color>
+
+    <!-- ألوان الحدود والفواصل القديمة -->
+    <color name="border_light_old">#4A4A60</color>
+    <color name="divider_old">#3A3A50</color>
+
+    <!-- ألوان شفافة قديمة -->
+    <color name="overlay_dark">#80000000</color>
+    <color name="overlay_light">#40FFFFFF</color>
+
+    <!-- ألوان إضافية مفقودة -->
+    <color name="gray_light">#F0F0F0</color>
+    <color name="gray_border">#E0E0E0</color>
+    <color name="gray_inactive">#BDBDBD</color>
+    <color name="gray_text">#666666</color>
+    <color name="gray_button">#5D6D7E</color>
+
+    <!-- ألوان التطبيقات الخارجية -->
+    <color name="whatsapp_green">#25D366</color>
+
+    <!-- ألوان الرسوم البيانية -->
+    <color name="chart_blue">#2980B9</color>
+    <color name="selection_blue">#A9CCE3</color>
+</resources>

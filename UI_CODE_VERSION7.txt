@@ -1,0 +1,336 @@
+// ==================== كود الواجهة الكامل - Version 7 مع Dark Mode ====================
+
+// ==================== 1. دالة setupUI الرئيسية ====================
+
+private void setupUI() {
+    LinearLayout mainLayout = new LinearLayout(this);
+    mainLayout.setOrientation(LinearLayout.VERTICAL);
+    // خلفية بسيطة داكنة
+    mainLayout.setBackgroundColor(uiHelper.getBackgroundDark());
+    mainLayout.setPadding(0, 0, 0, 0);
+
+    mainLayout.addView(createTitleSection());
+    mainLayout.addView(createTopButtonsLayout());
+
+    ScrollView scrollView = new ScrollView(this);
+    LinearLayout contentContainer = new LinearLayout(this);
+    contentContainer.setOrientation(LinearLayout.VERTICAL);
+    contentContainer.setPadding(20, 20, 20, 20);
+
+    contentContainer.addView(createSelectedAgentTextView());
+    contentContainer.addView(createAgentWalletLayout());
+    contentContainer.addView(createOldStyleInputLayout());
+    contentContainer.addView(createOldStyleYohoControls());
+
+    yohoInput = createOldStyleEditText("YOHO", 22, true);
+    LinearLayout.LayoutParams yohoResultParams = new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    );
+    yohoResultParams.setMargins(15, 15, 15, 30);
+    yohoInput.setLayoutParams(yohoResultParams);
+    contentContainer.addView(yohoInput);
+
+    TextView walletTitle = new TextView(this);
+    walletTitle.setText(uiHelper.getWalletEmoji() + " المحفظة (انقر على الرصيد للتعديل)");
+    walletTitle.setTextSize(20);
+    walletTitle.setTextColor(uiHelper.getTextPrimary());
+    walletTitle.setGravity(Gravity.CENTER);
+    walletTitle.setPadding(0, 20, 0, 10);
+    walletTitle.setTypeface(null, Typeface.BOLD);
+    contentContainer.addView(walletTitle);
+
+    contentContainer.addView(createOldStyleWalletLayout());
+    contentContainer.addView(createOldStyleActionButtons());
+
+    scrollView.addView(contentContainer);
+    mainLayout.addView(scrollView);
+
+    setContentView(mainLayout);
+}
+
+// ==================== 2. قسم العنوان ====================
+
+private LinearLayout createTitleSection() {
+    LinearLayout titleSection = new LinearLayout(this);
+    titleSection.setOrientation(LinearLayout.VERTICAL);
+    titleSection.setPadding(0, 30, 0, 30);
+    titleSection.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    // خلفية نظيفة وبسيطة
+    titleSection.setBackgroundColor(uiHelper.getBackgroundCard());
+
+    TextView title = new TextView(this);
+    title.setText("🏦 حاسبة اليويوهو");
+    title.setTextSize(24);
+    title.setTextColor(uiHelper.getTextPrimary());
+    title.setGravity(Gravity.CENTER);
+    title.setTypeface(null, Typeface.BOLD);
+    titleSection.addView(title);
+
+    TextView subTitle = new TextView(this);
+    subTitle.setText("درهم إماراتي ⇌ دولار ⇌ يوهو");
+    subTitle.setTextSize(16);
+    subTitle.setTextColor(uiHelper.getTextSecondary());
+    subTitle.setGravity(Gravity.CENTER);
+    subTitle.setPadding(0, 8, 0, 0);
+    titleSection.addView(subTitle);
+
+    return titleSection;
+}
+
+// ==================== 3. شريط الأزرار العلوي ====================
+
+private LinearLayout createTopButtonsLayout() {
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.HORIZONTAL);
+
+    layout.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        130  // ارتفاع لإظهار النص كاملاً
+    ));
+    layout.setPadding(8, 4, 8, 4);
+    layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
+
+    // ========== 1️⃣ زر التحليل (أخضر) - أصغر ==========
+    LinearLayout chartBtn = createSimpleIconButton(
+        R.drawable.ic_analytics,
+        "تحليل",
+        "#27AE60"
+    );
+    chartBtn.setOnClickListener(v -> openChartActivity());
+
+    LinearLayout.LayoutParams chartParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f  // weight = 0.8
+    );
+    chartParams.setMargins(2, 0, 2, 0);
+    chartBtn.setLayoutParams(chartParams);
+
+    // ========== 2️⃣ زر الوكلاء (برتقالي) - أكبر ==========
+    LinearLayout agentsBtn = createSimpleIconButton(
+        R.drawable.ic_local_shipping,
+        "وكلاء",
+        "#F39C12"
+    );
+    agentsBtn.setOnClickListener(this::showAgentPopupMenu);
+
+    agentsBtn.setOnLongClickListener(v -> {
+        isAgentSaleMode = !isAgentSaleMode;
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor(isAgentSaleMode ? "#F39C12" : "#3498DB"));
+        bg.setCornerRadius(8f);
+        v.setBackground(bg);
+        Toast.makeText(MainActivity.this,
+            isAgentSaleMode ? "وضع بيع الوكيل" : "وضع تعديل الوكيل",
+            Toast.LENGTH_SHORT).show();
+        return true;
+    });
+
+    LinearLayout.LayoutParams agentsParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f  // weight = 1.5 أكبر
+    );
+    agentsParams.setMargins(2, 0, 2, 0);
+    agentsBtn.setLayoutParams(agentsParams);
+
+    // ========== 3️⃣ زر السجلات (أزرق) - أصغر ==========
+    LinearLayout recordsBtn = createSimpleIconButton(
+        R.drawable.ic_history,
+        "السجلات",
+        "#3498DB"
+    );
+    recordsBtn.setOnClickListener(v -> openRecordsActivity());
+
+    LinearLayout.LayoutParams recordsParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f  // weight = 0.8
+    );
+    recordsParams.setMargins(2, 0, 2, 0);
+    recordsBtn.setLayoutParams(recordsParams);
+
+    // ========== 4️⃣ زر التصفير (أحمر) - أصغر ==========
+    LinearLayout resetBtn = createSimpleIconButton(
+        R.drawable.ic_restart_alt,
+        "تصفير",
+        "#FF4757"
+    );
+    resetBtn.setOnClickListener(v -> handleReset());
+
+    LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.6f  // weight = 0.6
+    );
+    resetParams.setMargins(2, 0, 2, 0);
+    resetBtn.setLayoutParams(resetParams);
+
+    // ========== 5️⃣ زر Dark Mode (رمادي/ذهبي) - صغير جداً ==========
+    LinearLayout darkModeBtn = createDarkModeButton();
+    darkModeBtn.setOnClickListener(v -> toggleDarkMode());
+
+    LinearLayout.LayoutParams darkModeParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.5f  // weight = 0.5 صغير جداً
+    );
+    darkModeParams.setMargins(2, 0, 2, 0);
+    darkModeBtn.setLayoutParams(darkModeParams);
+
+    // إضافة الأزرار
+    layout.addView(chartBtn);
+    layout.addView(agentsBtn);
+    layout.addView(recordsBtn);
+    layout.addView(resetBtn);
+    layout.addView(darkModeBtn);
+
+    return layout;
+}
+
+// ==================== 4. دالة إنشاء زر أيقونة ====================
+
+private LinearLayout createSimpleIconButton(int iconResId, String label, String bgColor) {
+    LinearLayout buttonLayout = new LinearLayout(this);
+    buttonLayout.setOrientation(LinearLayout.VERTICAL);
+    buttonLayout.setGravity(Gravity.CENTER);
+    buttonLayout.setPadding(6, 8, 6, 8);
+
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f
+    );
+    params.setMargins(2, 0, 2, 0);
+    buttonLayout.setLayoutParams(params);
+
+    buttonLayout.setClickable(true);
+    buttonLayout.setFocusable(true);
+
+    // زوايا منحنية وظل
+    GradientDrawable background = new GradientDrawable();
+    background.setColor(Color.parseColor(bgColor));
+    background.setCornerRadius(6f);
+    buttonLayout.setBackground(background);
+
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        buttonLayout.setElevation(2f);
+    }
+
+    // الأيقونة
+    ImageView iconView = new ImageView(this);
+    try {
+        iconView.setImageResource(iconResId);
+    } catch (Exception ignored) {}
+
+    iconView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+    iconView.setLayoutParams(new LinearLayout.LayoutParams(40, 40));
+    iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    buttonLayout.addView(iconView);
+
+    // النص
+    TextView labelView = new TextView(this);
+    labelView.setText(label);
+    labelView.setTextColor(Color.WHITE);
+    labelView.setTextSize(12);
+    labelView.setGravity(Gravity.CENTER);
+    labelView.setTypeface(null, Typeface.BOLD);
+    labelView.setPadding(0, 3, 0, 0);
+
+    labelView.setMaxLines(1);
+    labelView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    labelView.setSingleLine(true);
+
+    labelView.setShadowLayer(1.5f, 0f, 0.5f, Color.parseColor("#30000000"));
+
+    labelView.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+
+    buttonLayout.addView(labelView);
+
+    return buttonLayout;
+}
+
+// ==================== 5. زر Dark Mode ====================
+
+private LinearLayout createDarkModeButton() {
+    LinearLayout buttonLayout = new LinearLayout(this);
+    buttonLayout.setOrientation(LinearLayout.VERTICAL);
+    buttonLayout.setGravity(Gravity.CENTER);
+    buttonLayout.setPadding(4, 8, 4, 8);
+
+    buttonLayout.setClickable(true);
+    buttonLayout.setFocusable(true);
+
+    // اللون حسب الوضع الحالي
+    String bgColor = uiHelper.isDarkMode() ? "#FFD700" : "#5D6D7E";  // ذهبي في الداكن، رمادي في الفاتح
+    GradientDrawable background = new GradientDrawable();
+    background.setColor(Color.parseColor(bgColor));
+    background.setCornerRadius(6f);
+    buttonLayout.setBackground(background);
+
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        buttonLayout.setElevation(2f);
+    }
+
+    // أيقونة (نص emoji)
+    TextView iconView = new TextView(this);
+    iconView.setText(uiHelper.isDarkMode() ? "☀" : "🌙");  // شمس في الداكن، قمر في الفاتح
+    iconView.setTextSize(20);
+    iconView.setGravity(Gravity.CENTER);
+    iconView.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    buttonLayout.addView(iconView);
+
+    // نص صغير
+    TextView labelView = new TextView(this);
+    labelView.setText("");  // بدون نص لتوفير المساحة
+    labelView.setTextColor(Color.WHITE);
+    labelView.setTextSize(9);
+    labelView.setGravity(Gravity.CENTER);
+    labelView.setPadding(0, 2, 0, 0);
+    buttonLayout.addView(labelView);
+
+    // حفظ المرجع لتحديثه لاحقاً
+    buttonLayout.setTag(R.id.dark_mode_button_tag, new Object[]{iconView, labelView, background});
+
+    return buttonLayout;
+}
+
+// ==================== 6. دالة تبديل Dark Mode ====================
+
+private void toggleDarkMode() {
+    uiHelper.toggleDarkMode();
+
+    // إعادة إنشاء Activity لتطبيق الألوان الجديدة
+    recreate();
+}
+
+// ==================== ملاحظات مهمة ====================
+
+/*
+1. UIHelper:
+   - يجب أن يحتوي على:
+     * isDarkMode() - للتحقق من الوضع الحالي
+     * setDarkMode(boolean) - لتعيين الوضع
+     * toggleDarkMode() - لتبديل الوضع
+     * getBackgroundDark() - للخلفية الرئيسية
+     * getBackgroundCard() - لخلفية البطاقات
+     * getTextPrimary() - لون النص الرئيسي
+     * getTextSecondary() - لون النص الثانوي
+
+2. الألوان المستخدمة:
+   - Light Mode: خلفية بيضاء، نصوص داكنة
+   - Dark Mode: خلفية زرقاء داكنة، نصوص فاتحة
+
+3. أحجام الأزرار (weights):
+   - زر التحليل: 0.8
+   - زر الوكلاء: 1.5 (الأكبر)
+   - زر السجلات: 0.8
+   - زر التصفير: 0.6
+   - زر Dark Mode: 0.5 (الأصغر)
+
+4. ارتفاع شريط الأزرار: 130dp
+
+5. الأيقونات المطلوبة:
+   - ic_analytics (تحليل)
+   - ic_local_shipping (وكلاء)
+   - ic_history (سجلات)
+   - ic_restart_alt (تصفير)
+*/
