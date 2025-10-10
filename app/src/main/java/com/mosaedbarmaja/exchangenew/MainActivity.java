@@ -171,6 +171,9 @@ public class MainActivity extends Activity {
 
         setupUpdateReceiver();
 
+        // عرض رقم الإصدار الحالي للتأكد
+        displayCurrentVersion();
+
         checkForUpdate();
     }
 
@@ -2540,6 +2543,24 @@ public class MainActivity extends Activity {
 
     // --- كود التحديث: الدوال اللازمة للتحقق والتحميل والتثبيت ---
 
+    private void displayCurrentVersion() {
+        try {
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            int versionCode = pInfo.versionCode;
+            String versionName = pInfo.versionName;
+
+            Log.d("AppVersion", "📱 Current versionCode: " + versionCode);
+            Log.d("AppVersion", "📱 Current versionName: " + versionName);
+
+            // عرض رسالة Toast للمستخدم
+            Toast.makeText(this,
+                "الإصدار الحالي: " + versionName + " (كود: " + versionCode + ")",
+                Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e("AppVersion", "❌ Error getting version", e);
+        }
+    }
+
     private int getCurrentVersionCode() {
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -2591,10 +2612,17 @@ public class MainActivity extends Activity {
 
         new Thread(() -> {
             try {
-                URL url = new URL(UPDATE_JSON_URL);
+                // إضافة timestamp لتجنب التخزين المؤقت (cache-busting)
+                String urlWithTimestamp = UPDATE_JSON_URL + "?t=" + System.currentTimeMillis();
+                Log.d("UpdateChecker", "🔄 URL with cache-busting: " + urlWithTimestamp);
+
+                URL url = new URL(urlWithTimestamp);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
+                // تعطيل التخزين المؤقت
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Cache-Control", "no-cache");
                 connection.connect();
 
                 int responseCode = connection.getResponseCode();
