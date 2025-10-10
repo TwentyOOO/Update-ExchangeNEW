@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "1.0.8",
-  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.8/app-release.apk",
-  "releaseNotes": "Version 8: UI improvements - Reduced spacing and icon layout updates\n\n✅ Vertical layout for wallet icons (icons above numbers)\n✅ Larger icons: 64×64 pixels\n✅ Reduced spacing throughout the interface\n✅ Text-only action buttons\n✅ Compact and optimized layout"
+  "versionCode": 9,
+  "versionName": "1.0.9",
+  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.9/app-release.apk",
+  "releaseNotes": "Version 9: Dark Mode fix and wallet layout improvements\n\n✅ Fixed agent selection bar disappearing in Dark Mode\n✅ Darker agent mode colors for better visibility\n✅ Agent bar now persists after Dark Mode toggle\n✅ White text on dark backgrounds for clarity\n✅ AED and USDT wallet boxes with PNG icons\n✅ Equal styling for both currency boxes"
 }

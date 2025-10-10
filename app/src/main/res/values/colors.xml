@@ -181,8 +181,8 @@
     <color name="button_add">#00D9A3</color>
     <color name="button_subtract">#FF4757</color>
     <color name="button_neutral">#64B5F6</color>
-    <color name="button_agent_sale">#FF9800</color>
-    <color name="button_agent_adjust">#2196F3</color>
+    <color name="button_agent_sale">#F57C00</color>        <!-- ✅ برتقالي غامق يظهر في الوضعين -->
+    <color name="button_agent_adjust">#1976D2</color>      <!-- ✅ أزرق غامق يظهر في الوضعين -->
 
     <!-- ألوان الحدود والفواصل القديمة -->
     <color name="border_light_old">#4A4A60</color>

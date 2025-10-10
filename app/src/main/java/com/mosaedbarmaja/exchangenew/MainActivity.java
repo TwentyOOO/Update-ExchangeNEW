@@ -79,10 +79,15 @@ public class MainActivity extends Activity {
     private static final String KEY_SELECTED_AGENT = "selected_agent";
     private static final String KEY_CURRENT_YOHO_INDEX = "current_yoho_index";
     private static final String KEY_COMMISSION_INDEX = "commission_index";
+    private static final String KEY_IS_TRANSFER_MODE = "is_transfer_mode";  // ✅ حفظ حالة الوضع
     private boolean isActivityActive = false;
     private static final int CODE_DRAW_OVER_OTHER_APP_PERMISSION = 2084;
     private static final Object ACTION_ITEM_MARKER = new Object();
 
+    // معدل التحويل: 100 AED = 265000 YOHO (السعر الافتراضي)
+    private final double AED_TO_YOHO_RATE = 2650.0;  // 1 AED = 2650 YOHO
+    private final double YOHO_TO_AED_RATE = 1 / 2650.0;  // 1 YOHO = 0.000377 AED
+    // إبقاء المتغيرات القديمة للتوافق مع حقول الإدخال
     private final double AED_TO_USDT_RATE = 1 / 3.80;
     private final double USDT_TO_AED_RATE = 3.80 / 1;
     private final double CUSTOM_SALE_BASE_RATE_265 = 265000.0;
@@ -94,7 +99,7 @@ public class MainActivity extends Activity {
 
     // --- UI Components ---
     private EditText aedInput, usdtInput, yohoInput;
-    private TextView aedValue, usdtValue, selectedAgentTextView, yohoPriceSelector;
+    private TextView aedValue, usdtValue, selectedAgentTextView, yohoPriceSelector;  // استرجاع usdtValue
     private TextView agentYohoWalletDisplay, agentAedWalletDisplay;
     private LinearLayout agentWalletLayout;
     private Button agentCommissionButton;
@@ -205,6 +210,7 @@ public class MainActivity extends Activity {
         outState.putString(KEY_SELECTED_AGENT, selectedMainAgentName);
         outState.putInt(KEY_CURRENT_YOHO_INDEX, currentYohoIndex);
         outState.putInt(KEY_COMMISSION_INDEX, currentAgentCommissionIndex);
+        outState.putBoolean(KEY_IS_TRANSFER_MODE, isTransferToMemberMode);  // ✅ حفظ حالة الوضع
     }
 
     @Override
@@ -214,6 +220,7 @@ public class MainActivity extends Activity {
             selectedMainAgentName = savedInstanceState.getString(KEY_SELECTED_AGENT);
             currentYohoIndex = savedInstanceState.getInt(KEY_CURRENT_YOHO_INDEX);
             currentAgentCommissionIndex = savedInstanceState.getInt(KEY_COMMISSION_INDEX);
+            isTransferToMemberMode = savedInstanceState.getBoolean(KEY_IS_TRANSFER_MODE);  // ✅ استعادة حالة الوضع
             updateDisplayAfterStateRestore();
         }
     }
@@ -222,7 +229,8 @@ public class MainActivity extends Activity {
         updateYohoDisplay();
         updateWalletDisplay();
         if (selectedMainAgentName != null) {
-            updateAgentBalanceDisplay();
+            // ✅ إعادة عرض شريط الوكيل
+            setupAgentMode(selectedMainAgentName, isTransferToMemberMode);
         }
     }
 
@@ -655,7 +663,7 @@ public class MainActivity extends Activity {
     private TextView createSelectedAgentTextView() {
         selectedAgentTextView = new TextView(this);
         selectedAgentTextView.setTextSize(18);
-        selectedAgentTextView.setTextColor(uiHelper.getTextPrimary());
+        selectedAgentTextView.setTextColor(Color.WHITE);  // ✅ أبيض دائماً على الخلفية البرتقالية
         selectedAgentTextView.setGravity(Gravity.CENTER);
         selectedAgentTextView.setPadding(20, 12, 20, 12);  // ✅ تقليل من 24,18 إلى 20,12
         selectedAgentTextView.setVisibility(View.GONE);
@@ -864,53 +872,12 @@ public class MainActivity extends Activity {
         walletRow.setPadding(10, 10, 10, 10);
 
         // ════════════════════════════════════════════════════════════
-        // 1️⃣ صندوق USDT (أخضر فاتح) - النصف الأيسر
-        // ════════════════════════════════════════════════════════════
-        LinearLayout usdtBox = new LinearLayout(this);
-        usdtBox.setOrientation(LinearLayout.HORIZONTAL);
-        usdtBox.setGravity(Gravity.CENTER);
-        usdtBox.setPadding(15, 25, 15, 25);
-
-        // خلفية خضراء مع زوايا منحنية
-        GradientDrawable usdtBg = new GradientDrawable();
-        usdtBg.setColor(Color.parseColor("#00D9A3"));  // أخضر فاتح/تركواز
-        usdtBg.setCornerRadius(12f);
-        usdtBox.setBackground(usdtBg);
-
-        // الوزن - نصف العرض
-        LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
-            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
-        );
-        usdtParams.setMargins(0, 0, 5, 0);  // مسافة من اليمين
-        usdtBox.setLayoutParams(usdtParams);
-
-        // أيقونة البيتكوين والدولار
-        TextView usdtIcon = new TextView(this);
-        usdtIcon.setText("₿💵 ");
-        usdtIcon.setTextSize(24);
-        usdtBox.addView(usdtIcon);
-
-        // القيمة USDT (قابلة للتعديل)
-        final TextView usdtDisplay = new TextView(this);
-        usdtDisplay.setTextSize(22);
-        usdtDisplay.setTextColor(Color.WHITE);
-        usdtDisplay.setTypeface(null, Typeface.BOLD);
-        usdtDisplay.setGravity(Gravity.CENTER);
-        usdtValue = usdtDisplay;  // حفظ المرجع للتحديث
-        usdtBox.addView(usdtDisplay);
-
-        // جعل الصندوق قابل للنقر للتعديل
-        usdtBox.setOnClickListener(v -> showEditDialog("USDT"));
-
-        walletRow.addView(usdtBox);
-
-        // ════════════════════════════════════════════════════════════
-        // 2️⃣ صندوق AED (أبيض مع أخضر) - النصف الأيمن
+        // 1️⃣ صندوق AED (أبيض) - النصف الأيسر
         // ════════════════════════════════════════════════════════════
         LinearLayout aedBox = new LinearLayout(this);
-        aedBox.setOrientation(LinearLayout.HORIZONTAL);
+        aedBox.setOrientation(LinearLayout.VERTICAL);
         aedBox.setGravity(Gravity.CENTER);
-        aedBox.setPadding(15, 25, 15, 25);
+        aedBox.setPadding(15, 20, 15, 20);
 
         // خلفية بيضاء مع زوايا منحنية
         GradientDrawable aedBg = new GradientDrawable();
@@ -925,36 +892,80 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams aedParams = new LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
         );
-        aedParams.setMargins(5, 0, 0, 0);  // مسافة من اليسار
+        aedParams.setMargins(0, 0, 5, 0);  // مسافة من اليمين
         aedBox.setLayoutParams(aedParams);
 
-        // أيقونة اليويو والدولار
-        TextView aedIcon = new TextView(this);
-        aedIcon.setText("💰💲 ");
-        aedIcon.setTextSize(24);
-        aedBox.addView(aedIcon);
+        // أيقونة AED PNG - في الأعلى
+        ImageView aedIconView = new ImageView(this);
+        try { aedIconView.setImageResource(R.drawable.aed_icon); } catch (Exception ignored) {}
+        LinearLayout.LayoutParams aedIconParams = new LinearLayout.LayoutParams(64, 64);
+        aedIconParams.setMargins(0, 0, 0, 8);  // مسافة تحت الأيقونة
+        aedIconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        aedIconView.setLayoutParams(aedIconParams);
+        aedBox.addView(aedIconView);
 
-        // نص "AED:"
-        TextView aedLabel = new TextView(this);
-        aedLabel.setText("AED: ");
-        aedLabel.setTextSize(18);
-        aedLabel.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
-        aedLabel.setTypeface(null, Typeface.BOLD);
-        aedBox.addView(aedLabel);
-
-        // القيمة AED (قابلة للتعديل)
+        // القيمة AED (قابلة للتعديل) - تحت الأيقونة
         final TextView aedDisplay = new TextView(this);
         aedDisplay.setTextSize(22);
-        aedDisplay.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
+        int aedTextColor = uiHelper.isDarkMode() ? Color.WHITE : Color.BLACK;
+        aedDisplay.setTextColor(aedTextColor);
         aedDisplay.setTypeface(null, Typeface.BOLD);
         aedDisplay.setGravity(Gravity.CENTER);
-        aedValue = aedDisplay;  // حفظ المرجع للتحديث
+        aedValue = aedDisplay;
         aedBox.addView(aedDisplay);
 
         // جعل الصندوق قابل للنقر للتعديل
         aedBox.setOnClickListener(v -> showEditDialog("AED"));
 
         walletRow.addView(aedBox);
+
+        // ════════════════════════════════════════════════════════════
+        // 2️⃣ صندوق USDT (أبيض) - النصف الأيمن
+        // ════════════════════════════════════════════════════════════
+        LinearLayout usdtBox = new LinearLayout(this);
+        usdtBox.setOrientation(LinearLayout.VERTICAL);
+        usdtBox.setGravity(Gravity.CENTER);
+        usdtBox.setPadding(15, 20, 15, 20);
+
+        // خلفية بيضاء مع زوايا منحنية
+        GradientDrawable usdtBg = new GradientDrawable();
+        int usdtBgColor = uiHelper.isDarkMode() ?
+            Color.parseColor("#2C3E50") :  // داكن في Dark Mode
+            Color.WHITE;                    // أبيض في Light Mode
+        usdtBg.setColor(usdtBgColor);
+        usdtBg.setCornerRadius(12f);
+        usdtBox.setBackground(usdtBg);
+
+        // الوزن - نصف العرض
+        LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        usdtParams.setMargins(5, 0, 0, 0);  // مسافة من اليسار
+        usdtBox.setLayoutParams(usdtParams);
+
+        // أيقونة USDT PNG - في الأعلى
+        ImageView usdtIconView = new ImageView(this);
+        try { usdtIconView.setImageResource(R.drawable.usdt_icon); } catch (Exception ignored) {}
+        LinearLayout.LayoutParams usdtIconParams = new LinearLayout.LayoutParams(64, 64);
+        usdtIconParams.setMargins(0, 0, 0, 8);  // مسافة تحت الأيقونة
+        usdtIconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        usdtIconView.setLayoutParams(usdtIconParams);
+        usdtBox.addView(usdtIconView);
+
+        // القيمة USDT (قابلة للتعديل) - تحت الأيقونة
+        final TextView usdtDisplay = new TextView(this);
+        usdtDisplay.setTextSize(22);
+        int usdtTextColor = uiHelper.isDarkMode() ? Color.WHITE : Color.BLACK;
+        usdtDisplay.setTextColor(usdtTextColor);
+        usdtDisplay.setTypeface(null, Typeface.BOLD);
+        usdtDisplay.setGravity(Gravity.CENTER);
+        usdtValue = usdtDisplay;
+        usdtBox.addView(usdtDisplay);
+
+        // جعل الصندوق قابل للنقر للتعديل
+        usdtBox.setOnClickListener(v -> showEditDialog("USDT"));
+
+        walletRow.addView(usdtBox);
 
         return walletRow;
     }
@@ -1760,10 +1771,13 @@ public class MainActivity extends Activity {
     private void updateWalletDisplay() {
         double aedWallet = parseDoubleSafe(preferences.getString("aed_wallet", "0.0"));
         double usdtWallet = parseDoubleSafe(preferences.getString("usdt_wallet", "0.0"));
-        aedValue.setText(uiHelper.getAedEmoji() + " " + decimalFormat.format(aedWallet));
-        usdtValue.setText(uiHelper.getUsdtEmoji() + " " + decimalFormat.format(usdtWallet));
-        aedValue.setTextColor(aedWallet < 0 ? uiHelper.getErrorRed() : uiHelper.getAedColor());
-        usdtValue.setTextColor(usdtWallet < 0 ? uiHelper.getErrorRed() : uiHelper.getUsdtColor());
+        aedValue.setText(decimalFormat.format(aedWallet));
+        usdtValue.setText(decimalFormat.format(usdtWallet));
+
+        // نفس اللون للاثنين
+        int textColor = uiHelper.isDarkMode() ? Color.WHITE : Color.BLACK;
+        aedValue.setTextColor(aedWallet < 0 ? uiHelper.getErrorRed() : textColor);
+        usdtValue.setTextColor(usdtWallet < 0 ? uiHelper.getErrorRed() : textColor);
     }
 
     private void updateAgentBalanceDisplay() {
