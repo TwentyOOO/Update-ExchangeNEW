@@ -1,0 +1,6 @@
+{
+  "versionCode": 7,
+  "versionName": "1.0.7",
+  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.7/app-release.apk",
+  "releaseNotes": "Version 7: UI improvements - Reduced spacing and icon layout updates\n\n✅ Vertical layout for wallet icons (icons above numbers)\n✅ Larger icons: 64×64 pixels\n✅ Reduced spacing throughout the interface\n✅ Text-only action buttons\n✅ Compact and optimized layout"
+}
