@@ -1,6 +1,38 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.ExchangeNEW" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- Light Theme (Default) -->
+    <style name="Base.Theme.ExchangeNEW.Light" parent="Theme.Material3.Light.NoActionBar">
+        <!-- الألوان الأساسية -->
+        <item name="colorPrimary">@color/primary_gold</item>
+        <item name="colorPrimaryVariant">@color/primary_gold_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- الألوان الثانوية -->
+        <item name="colorSecondary">@color/accent_blue</item>
+        <item name="colorSecondaryVariant">@color/accent_purple</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- ألوان الخلفية -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorSurface">@color/background_light</item>
+        <item name="colorOnSurface">@color/text_on_light</item>
+
+        <!-- ألوان النصوص -->
+        <item name="android:textColorPrimary">@color/text_on_light</item>
+        <item name="android:textColorSecondary">@color/gray_text</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+
+        <!-- حالات الأخطاء -->
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/white</item>
+
+        <!-- تخصيصات إضافية -->
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Dark Theme -->
+    <style name="Base.Theme.ExchangeNEW.Dark" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- الألوان الأساسية -->
         <item name="colorPrimary">@color/primary_gold</item>
         <item name="colorPrimaryVariant">@color/primary_gold_dark</item>
@@ -31,7 +63,7 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <style name="Theme.ExchangeNEW" parent="Base.Theme.ExchangeNEW" />
+    <style name="Theme.ExchangeNEW" parent="Base.Theme.ExchangeNEW.Light" />
 
     <!-- أنماط مخصصة للبطاقات -->
     <style name="CardStyle">

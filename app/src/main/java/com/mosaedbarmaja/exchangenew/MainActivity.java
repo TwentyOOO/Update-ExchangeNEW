@@ -460,11 +460,23 @@ public class MainActivity extends Activity {
         resetParams.setMargins(2, 0, 2, 0);
         resetBtn.setLayoutParams(resetParams);
 
+        // ========== 5️⃣ زر Dark Mode (رمادي/أصفر) - صغير جداً ==========
+        LinearLayout darkModeBtn = createDarkModeButton();
+        darkModeBtn.setOnClickListener(v -> toggleDarkMode());
+
+        // ✅ زر صغير جداً 0.5
+        LinearLayout.LayoutParams darkModeParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 0.5f  // ✅ weight = 0.5 صغير جداً
+        );
+        darkModeParams.setMargins(2, 0, 2, 0);
+        darkModeBtn.setLayoutParams(darkModeParams);
+
         // ✅ إضافة الأزرار مع مسافات بينها
         layout.addView(chartBtn);
         layout.addView(agentsBtn);
         layout.addView(recordsBtn);
         layout.addView(resetBtn);
+        layout.addView(darkModeBtn);
 
         return layout;
     }
@@ -579,6 +591,65 @@ public class MainActivity extends Activity {
             Math.min(255, green),
             Math.min(255, blue)
         );
+    }
+
+    /**
+     * إنشاء زر Dark Mode صغير
+     */
+    private LinearLayout createDarkModeButton() {
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.VERTICAL);
+        buttonLayout.setGravity(Gravity.CENTER);
+        buttonLayout.setPadding(4, 8, 4, 8);
+
+        buttonLayout.setClickable(true);
+        buttonLayout.setFocusable(true);
+
+        // اللون حسب الوضع الحالي
+        String bgColor = uiHelper.isDarkMode() ? "#FFD700" : "#5D6D7E";
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.parseColor(bgColor));
+        background.setCornerRadius(6f);
+        buttonLayout.setBackground(background);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            buttonLayout.setElevation(2f);
+        }
+
+        // أيقونة (نص بدل أيقونة)
+        TextView iconView = new TextView(this);
+        iconView.setText(uiHelper.isDarkMode() ? "☀" : "🌙");
+        iconView.setTextSize(20);
+        iconView.setGravity(Gravity.CENTER);
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        buttonLayout.addView(iconView);
+
+        // النص
+        TextView labelView = new TextView(this);
+        labelView.setText("");
+        labelView.setTextColor(Color.WHITE);
+        labelView.setTextSize(10);
+        labelView.setGravity(Gravity.CENTER);
+        labelView.setPadding(0, 2, 0, 0);
+        buttonLayout.addView(labelView);
+
+        // حفظ المرجع لتحديثه لاحقاً
+        buttonLayout.setTag(R.id.dark_mode_button_tag, new Object[]{iconView, labelView, background});
+
+        return buttonLayout;
+    }
+
+    /**
+     * تبديل Dark Mode وإعادة إنشاء الواجهة
+     */
+    private void toggleDarkMode() {
+        uiHelper.toggleDarkMode();
+
+        // إعادة إنشاء Activity لتطبيق الألوان الجديدة
+        recreate();
     }
 
     private TextView createSelectedAgentTextView() {

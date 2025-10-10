@@ -1,32 +1,61 @@
 package com.mosaedbarmaja.exchangenew;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import androidx.core.content.ContextCompat;
 
 /**
  * فئة مساعدة لإدارة ألوان وأنماط واجهة المستخدم
- * UI Helper class for managing colors and styles
+ * UI Helper class for managing colors and styles with Dark Mode support
  */
 public class UIHelper {
 
     private Context context;
+    private boolean isDarkMode;
+    private static final String PREFS_NAME = "GoldExchangeApp";
+    private static final String KEY_DARK_MODE = "dark_mode_enabled";
 
     public UIHelper(Context context) {
         this.context = context;
+        // قراءة حالة Dark Mode من SharedPreferences
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.isDarkMode = prefs.getBoolean(KEY_DARK_MODE, false); // false = Light Mode (default)
+    }
+
+    // --- إدارة Dark Mode / Dark Mode Management ---
+    public boolean isDarkMode() {
+        return isDarkMode;
+    }
+
+    public void setDarkMode(boolean darkMode) {
+        this.isDarkMode = darkMode;
+        // حفظ الحالة
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_DARK_MODE, darkMode).apply();
+    }
+
+    public void toggleDarkMode() {
+        setDarkMode(!isDarkMode);
     }
 
     // --- الألوان الأساسية / Background Colors ---
     public int getBackgroundDark() {
-        return ContextCompat.getColor(context, R.color.background_dark);
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_dark) :
+            Color.WHITE;
     }
 
     public int getBackgroundCard() {
-        return ContextCompat.getColor(context, R.color.background_card);
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_card) :
+            ContextCompat.getColor(context, R.color.background_light);
     }
 
     public int getBackgroundSurface() {
-        return ContextCompat.getColor(context, R.color.background_surface);
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_surface) :
+            ContextCompat.getColor(context, R.color.gray_light);
     }
 
     // --- الألوان الأساسية للثيم / Theme Primary Colors ---
@@ -48,11 +77,15 @@ public class UIHelper {
 
     // --- ألوان النصوص / Text Colors ---
     public int getTextPrimary() {
-        return ContextCompat.getColor(context, R.color.text_primary);
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.text_primary) :
+            ContextCompat.getColor(context, R.color.text_on_light);
     }
 
     public int getTextSecondary() {
-        return ContextCompat.getColor(context, R.color.text_secondary);
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.text_secondary) :
+            ContextCompat.getColor(context, R.color.gray_text);
     }
 
     public int getTextHint() {
