@@ -2707,47 +2707,122 @@ public class MainActivity extends Activity {
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void downloadAndInstallApk(String apkUrl) {
+        Log.d("UpdateDownload", "📥 Starting download from: " + apkUrl);
         String fileName = "app-update.apk";
 
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(apkUrl));
-        request.setMimeType("application/vnd.android.package-archive");
-        request.setTitle("تحميل التحديث");
-        request.setDescription("جاري تحميل الإصدار الجديد...");
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-
-        // استخدم الطريقة الموصى بها لتحديد وجهة التحميل
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-
-        Toast.makeText(this, "بدأ تحميل التحديث...", Toast.LENGTH_LONG).show();
         final DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         if (downloadManager == null) {
+            Log.e("UpdateDownload", "❌ DownloadManager is null");
             Toast.makeText(this, "فشل بدء التحميل.", Toast.LENGTH_SHORT).show();
             return;
         }
-        final long downloadId = downloadManager.enqueue(request);
 
+        final long downloadId;
+        try {
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(apkUrl));
+            request.setMimeType("application/vnd.android.package-archive");
+            request.setTitle("تحميل التحديث");
+            request.setDescription("جاري تحميل الإصدار الجديد...");
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+            // استخدم الطريقة الموصى بها لتحديد وجهة التحميل
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            Log.d("UpdateDownload", "📁 Download destination: Downloads/" + fileName);
+
+            Toast.makeText(this, "بدأ تحميل التحديث...", Toast.LENGTH_LONG).show();
+            downloadId = downloadManager.enqueue(request);
+            Log.d("UpdateDownload", "✅ Download started with ID: " + downloadId);
+        } catch (Exception e) {
+            Log.e("UpdateDownload", "❌ Error starting download", e);
+            Toast.makeText(this, "خطأ في بدء التحميل: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
+        }
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             public void onReceive(Context ctxt, Intent intent) {
                 long receivedDownloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                Log.d("UpdateDownload", "📬 Download complete broadcast received. ID: " + receivedDownloadId);
+
                 if (downloadId == receivedDownloadId) {
-                    unregisterReceiver(this); // إلغاء تسجيل المستقبل أولاً
+                    Log.d("UpdateDownload", "✅ Download ID matches!");
+                    unregisterReceiver(this);
+
                     try {
-                        // استخدم الـ URI الذي يوفره مدير التحميل مباشرة
-                        Uri apkUri = downloadManager.getUriForDownloadedFile(downloadId);
-                        if (apkUri == null) {
-                            Log.e("UpdateInstaller", "فشل التحميل، الـ URI فارغ.");
-                            Toast.makeText(MainActivity.this, "فشل التحميل. حاول مرة أخرى.", Toast.LENGTH_LONG).show();
-                            return;
+                        // فحص حالة التحميل
+                        DownloadManager.Query query = new DownloadManager.Query();
+                        query.setFilterById(downloadId);
+                        android.database.Cursor cursor = downloadManager.query(query);
+
+                        if (cursor != null && cursor.moveToFirst()) {
+                            int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                            int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                            int status = cursor.getInt(statusIndex);
+                            int reason = cursor.getInt(reasonIndex);
+
+                            Log.d("UpdateDownload", "📊 Download status: " + status + ", reason: " + reason);
+
+                            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                                Log.d("UpdateDownload", "✅ Download successful!");
+                                Uri apkUri = downloadManager.getUriForDownloadedFile(downloadId);
+
+                                if (apkUri == null) {
+                                    Log.e("UpdateInstaller", "❌ APK URI is null");
+                                    Toast.makeText(MainActivity.this, "فشل التحميل. الملف غير موجود.", Toast.LENGTH_LONG).show();
+                                    cursor.close();
+                                    return;
+                                }
+
+                                Log.d("UpdateInstaller", "📦 APK URI: " + apkUri.toString());
+
+                                Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                                installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                                installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(installIntent);
+                                Log.d("UpdateInstaller", "🚀 Install intent started");
+
+                            } else if (status == DownloadManager.STATUS_FAILED) {
+                                Log.e("UpdateDownload", "❌ Download failed! Reason: " + reason);
+                                String errorMsg = "فشل التحميل. السبب: ";
+                                switch (reason) {
+                                    case DownloadManager.ERROR_CANNOT_RESUME:
+                                        errorMsg += "لا يمكن استئناف التحميل";
+                                        break;
+                                    case DownloadManager.ERROR_DEVICE_NOT_FOUND:
+                                        errorMsg += "الجهاز غير موجود";
+                                        break;
+                                    case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
+                                        errorMsg += "الملف موجود بالفعل";
+                                        break;
+                                    case DownloadManager.ERROR_FILE_ERROR:
+                                        errorMsg += "خطأ في الملف";
+                                        break;
+                                    case DownloadManager.ERROR_HTTP_DATA_ERROR:
+                                        errorMsg += "خطأ في بيانات HTTP";
+                                        break;
+                                    case DownloadManager.ERROR_INSUFFICIENT_SPACE:
+                                        errorMsg += "مساحة غير كافية";
+                                        break;
+                                    case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
+                                        errorMsg += "إعادة توجيه كثيرة";
+                                        break;
+                                    case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
+                                        errorMsg += "كود HTTP غير معالج";
+                                        break;
+                                    case DownloadManager.ERROR_UNKNOWN:
+                                    default:
+                                        errorMsg += "خطأ غير معروف";
+                                        break;
+                                }
+                                Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                            cursor.close();
+                        } else {
+                            Log.e("UpdateDownload", "❌ Cursor is null or empty");
+                            Toast.makeText(MainActivity.this, "فشل التحقق من حالة التحميل", Toast.LENGTH_LONG).show();
                         }
 
-                        Intent installIntent = new Intent(Intent.ACTION_VIEW);
-                        installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                        installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(installIntent);
-
                     } catch (Exception e) {
-                        Log.e("UpdateInstaller", "خطأ أثناء تثبيت APK", e);
-                        Toast.makeText(MainActivity.this, "فشل تثبيت التحديث.", Toast.LENGTH_LONG).show();
+                        Log.e("UpdateInstaller", "❌ Error during install", e);
+                        Toast.makeText(MainActivity.this, "فشل التثبيت: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
             }
