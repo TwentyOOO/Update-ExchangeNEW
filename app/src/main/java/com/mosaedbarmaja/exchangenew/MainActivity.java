@@ -310,7 +310,7 @@ public class MainActivity extends Activity {
         ScrollView scrollView = new ScrollView(this);
         LinearLayout contentContainer = new LinearLayout(this);
         contentContainer.setOrientation(LinearLayout.VERTICAL);
-        contentContainer.setPadding(20, 20, 20, 20);
+        contentContainer.setPadding(10, 5, 10, 5);  // ✅ تقليل المسافات من 20 إلى 10,5
 
         contentContainer.addView(createSelectedAgentTextView());
         contentContainer.addView(createAgentWalletLayout());
@@ -319,7 +319,7 @@ public class MainActivity extends Activity {
 
         yohoInput = createOldStyleEditText("YOHO", 22, true);
         LinearLayout.LayoutParams yohoResultParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        yohoResultParams.setMargins(15, 15, 15, 30);
+        yohoResultParams.setMargins(10, 5, 10, 10);  // ✅ تقليل المسافات من 15,15,15,30 إلى 10,5,10,10
         yohoInput.setLayoutParams(yohoResultParams);
         contentContainer.addView(yohoInput);
 
@@ -328,7 +328,7 @@ public class MainActivity extends Activity {
         walletTitle.setTextSize(20);
         walletTitle.setTextColor(uiHelper.getTextPrimary());
         walletTitle.setGravity(Gravity.CENTER);
-        walletTitle.setPadding(0, 20, 0, 10);
+        walletTitle.setPadding(0, 10, 0, 5);  // ✅ تقليل المسافات من 20,10 إلى 10,5
         walletTitle.setTypeface(null, Typeface.BOLD);
         contentContainer.addView(walletTitle);
 
@@ -347,7 +347,7 @@ public class MainActivity extends Activity {
     private LinearLayout createTitleSection() {
         LinearLayout titleSection = new LinearLayout(this);
         titleSection.setOrientation(LinearLayout.VERTICAL);
-        titleSection.setPadding(0, 30, 0, 30);
+        titleSection.setPadding(0, 10, 0, 10);  // ✅ تقليل من 30 إلى 10
         titleSection.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         // خلفية نظيفة وبسيطة
         titleSection.setBackgroundColor(uiHelper.getBackgroundCard());
@@ -365,7 +365,7 @@ public class MainActivity extends Activity {
         subTitle.setTextSize(16);
         subTitle.setTextColor(uiHelper.getTextSecondary());
         subTitle.setGravity(Gravity.CENTER);
-        subTitle.setPadding(0, 8, 0, 0);
+        subTitle.setPadding(0, 4, 0, 0);  // ✅ تقليل من 8 إلى 4
         titleSection.addView(subTitle);
         return titleSection;
     }
@@ -657,11 +657,11 @@ public class MainActivity extends Activity {
         selectedAgentTextView.setTextSize(18);
         selectedAgentTextView.setTextColor(uiHelper.getTextPrimary());
         selectedAgentTextView.setGravity(Gravity.CENTER);
-        selectedAgentTextView.setPadding(24, 18, 24, 18);
+        selectedAgentTextView.setPadding(20, 12, 20, 12);  // ✅ تقليل من 24,18 إلى 20,12
         selectedAgentTextView.setVisibility(View.GONE);
         selectedAgentTextView.setTypeface(null, Typeface.BOLD);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 12, 0, 12);
+        params.setMargins(0, 5, 0, 5);  // ✅ تقليل من 12 إلى 5
         selectedAgentTextView.setLayoutParams(params);
         selectedAgentTextView.setOnClickListener(v -> resetSelection());
         return selectedAgentTextView;
@@ -671,12 +671,12 @@ public class MainActivity extends Activity {
         agentWalletLayout = new LinearLayout(this);
         agentWalletLayout.setOrientation(LinearLayout.HORIZONTAL);
         agentWalletLayout.setVisibility(View.GONE);
-        agentWalletLayout.setPadding(0, 5, 0, 15);
+        agentWalletLayout.setPadding(0, 3, 0, 8);  // ✅ تقليل من 5,15 إلى 3,8
 
         LinearLayout.LayoutParams yohoParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
         yohoParams.setMarginEnd(10);
         LinearLayout yohoDisplayLayout = new LinearLayout(this);
-        yohoDisplayLayout.setOrientation(LinearLayout.HORIZONTAL);
+        yohoDisplayLayout.setOrientation(LinearLayout.VERTICAL);  // ✅ تغيير من HORIZONTAL إلى VERTICAL
         yohoDisplayLayout.setGravity(Gravity.CENTER);
         yohoDisplayLayout.setBackgroundColor(uiHelper.getBackgroundCard());
         yohoDisplayLayout.setPadding(24, 18, 24, 18);
@@ -701,16 +701,17 @@ public class MainActivity extends Activity {
 
         ImageView yohoIcon = new ImageView(this);
         try { yohoIcon.setImageResource(R.drawable.yoho_icon); } catch (Exception ignored) {}
-        LinearLayout.LayoutParams yohoIconParams = new LinearLayout.LayoutParams(48, 48);
-        yohoIconParams.setMarginEnd(10);
+        LinearLayout.LayoutParams yohoIconParams = new LinearLayout.LayoutParams(64, 64);  // ✅ حجم أكبر للأيقونة
+        yohoIconParams.setMargins(0, 0, 0, 8);  // ✅ مسافة تحت الأيقونة
         yohoIcon.setLayoutParams(yohoIconParams);
         yohoDisplayLayout.addView(yohoIcon);
 
         agentYohoWalletDisplay = new TextView(this);
-        agentYohoWalletDisplay.setText(uiHelper.getYohoEmoji() + " YOHO: 0");
+        agentYohoWalletDisplay.setText("0");  // ✅ أرقام فقط
         agentYohoWalletDisplay.setTextColor(uiHelper.getTextPrimary());
-        agentYohoWalletDisplay.setTextSize(18);
+        agentYohoWalletDisplay.setTextSize(20);  // ✅ حجم أكبر قليلاً
         agentYohoWalletDisplay.setTypeface(null, Typeface.BOLD);
+        agentYohoWalletDisplay.setGravity(Gravity.CENTER);  // ✅ توسيط النص
         agentYohoWalletDisplay.setTag("yoho_text");
         yohoDisplayLayout.addView(agentYohoWalletDisplay);
 
@@ -744,7 +745,7 @@ public class MainActivity extends Activity {
         });
 
         LinearLayout aedDisplayLayout = new LinearLayout(this);
-        aedDisplayLayout.setOrientation(LinearLayout.HORIZONTAL);
+        aedDisplayLayout.setOrientation(LinearLayout.VERTICAL);  // ✅ تغيير من HORIZONTAL إلى VERTICAL
         aedDisplayLayout.setGravity(Gravity.CENTER);
         aedDisplayLayout.setBackgroundColor(uiHelper.getAedColor());
         aedDisplayLayout.setPadding(24, 18, 24, 18);
@@ -753,16 +754,17 @@ public class MainActivity extends Activity {
 
         ImageView aedIcon = new ImageView(this);
         try { aedIcon.setImageResource(R.drawable.aed_icon); } catch (Exception ignored) {}
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(48, 48);
-        iconParams.setMarginEnd(10);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(64, 64);  // ✅ حجم أكبر للأيقونة
+        iconParams.setMargins(0, 0, 0, 8);  // ✅ مسافة تحت الأيقونة
         aedIcon.setLayoutParams(iconParams);
         aedDisplayLayout.addView(aedIcon);
 
         agentAedWalletDisplay = new TextView(this);
-        agentAedWalletDisplay.setText(uiHelper.getAedEmoji() + " 0.00");
+        agentAedWalletDisplay.setText("0.00");  // ✅ أرقام فقط
         agentAedWalletDisplay.setTextColor(uiHelper.getTextPrimary());
-        agentAedWalletDisplay.setTextSize(18);
+        agentAedWalletDisplay.setTextSize(20);  // ✅ حجم أكبر قليلاً
         agentAedWalletDisplay.setTypeface(null, Typeface.BOLD);
+        agentAedWalletDisplay.setGravity(Gravity.CENTER);  // ✅ توسيط النص
         aedDisplayLayout.addView(agentAedWalletDisplay);
 
         // ✅ تبديل الأماكن: AED يسار، YOHO يمين
@@ -822,7 +824,7 @@ public class MainActivity extends Activity {
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(15, 30, 15, 0);
+        params.setMargins(10, 10, 10, 0);  // ✅ تقليل من 15,30 إلى 10,10
         layout.setLayoutParams(params);
         yohoPriceSelector = new TextView(this);
         yohoPriceSelector.setText("📌 اختر سعر YOHO");
@@ -831,7 +833,7 @@ public class MainActivity extends Activity {
         yohoPriceSelector.setGravity(Gravity.CENTER);
         yohoPriceSelector.setBackgroundColor(uiHelper.getBackgroundSurface());
         yohoPriceSelector.setTypeface(null, Typeface.BOLD);
-        yohoPriceSelector.setPadding(24, 24, 24, 24);
+        yohoPriceSelector.setPadding(18, 16, 18, 16);  // ✅ تقليل من 24 إلى 18,16
         yohoPriceSelector.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         yohoPriceSelector.setOnClickListener(this::showYohoPrices);
         agentCommissionButton = new Button(this);
@@ -840,9 +842,9 @@ public class MainActivity extends Activity {
         agentCommissionButton.setTextColor(uiHelper.getTextPrimary());
         agentCommissionButton.setBackgroundColor(uiHelper.getWarningOrange());
         agentCommissionButton.setTypeface(null, Typeface.BOLD);
-        agentCommissionButton.setPadding(24, 24, 24, 24);
+        agentCommissionButton.setPadding(18, 16, 18, 16);  // ✅ تقليل من 24 إلى 18,16
         LinearLayout.LayoutParams agentBtnParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
-        agentBtnParams.setMarginStart(10);
+        agentBtnParams.setMarginStart(8);  // ✅ تقليل من 10 إلى 8
         agentCommissionButton.setLayoutParams(agentBtnParams);
         agentCommissionButton.setVisibility(View.GONE);
         agentCommissionButton.setOnClickListener(this::showAgentCommissionPrices);
@@ -879,9 +881,9 @@ public class MainActivity extends Activity {
     private ImageView createCurrencyIcon(int imageResourceId) {
         ImageView icon = new ImageView(this);
         try { icon.setImageResource(imageResourceId); } catch (Exception ignored) {}
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(48, 48);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(64, 64);  // ✅ حجم أكبر
         iconParams.gravity = Gravity.CENTER_HORIZONTAL;
-        iconParams.setMargins(0, 0, 0, 10);
+        iconParams.setMargins(0, 0, 0, 12);  // ✅ مسافة أكبر تحت الأيقونة
         icon.setLayoutParams(iconParams);
         return icon;
     }
@@ -959,18 +961,18 @@ public class MainActivity extends Activity {
         // ✅ خلفية بنفس نمط الشريط العلوي (اختياري)
         layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
 
-        // ========== زر الإضافة - نمط عصري مع أيقونة ==========
+        // ========== زر الإضافة - نص فقط ==========
         LinearLayout addButton = createActionButton(
             "اضف الرصيد",
-            "+",
+            "",  // بدون رمز
             "#4CAF50"  // أخضر
         );
         addButton.setOnClickListener(v -> handleAddOrSubtract(true));
 
-        // ========== زر الخصم - نمط عصري مع أيقونة ==========
+        // ========== زر الخصم - نص فقط ==========
         LinearLayout subButton = createActionButton(
             "اخصم الرصيد",
-            "-",
+            "",  // بدون رمز
             "#F44336"  // أحمر
         );
         subButton.setOnClickListener(v -> handleAddOrSubtract(false));
@@ -1009,18 +1011,20 @@ public class MainActivity extends Activity {
             buttonLayout.setElevation(2f);
         }
 
-        // ========== الأيقونة (الرمز) ==========
-        TextView emojiView = new TextView(this);
-        emojiView.setText(emoji);
-        emojiView.setTextSize(40);  // حجم كبير للرمز + / -
-        emojiView.setTextColor(Color.WHITE);
-        emojiView.setGravity(Gravity.CENTER);
-        emojiView.setTypeface(null, Typeface.BOLD);
-        emojiView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-        buttonLayout.addView(emojiView);
+        // ========== الأيقونة (الرمز) - فقط إذا كان موجود ==========
+        if (emoji != null && !emoji.isEmpty()) {
+            TextView emojiView = new TextView(this);
+            emojiView.setText(emoji);
+            emojiView.setTextSize(40);  // حجم كبير للرمز + / -
+            emojiView.setTextColor(Color.WHITE);
+            emojiView.setGravity(Gravity.CENTER);
+            emojiView.setTypeface(null, Typeface.BOLD);
+            emojiView.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            buttonLayout.addView(emojiView);
+        }
 
         // ========== النص ==========
         TextView labelView = new TextView(this);
@@ -1663,8 +1667,8 @@ public class MainActivity extends Activity {
         if (selectedMainAgentName != null) {
             Agent agent = getAgentData(selectedMainAgentName);
             if (agent != null) {
-                agentYohoWalletDisplay.setText(uiHelper.getYohoEmoji() + " YOHO: " + yohoDecimalFormat.format(agent.yohoBalance));
-                agentAedWalletDisplay.setText(uiHelper.getAedEmoji() + " " + decimalFormat.format(agent.aedBalance));
+                agentYohoWalletDisplay.setText(yohoDecimalFormat.format(agent.yohoBalance));  // ✅ أرقام فقط بدون نص
+                agentAedWalletDisplay.setText(decimalFormat.format(agent.aedBalance));  // ✅ أرقام فقط بدون نص
                 if (agent.yohoBalance < 0) {
                     agentYohoWalletDisplay.setTextColor(uiHelper.getErrorRed());
                 } else if (agent.yohoBalance > 0) {
