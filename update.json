@@ -1,6 +1,6 @@
 {
-  "versionCode": 9,
-  "versionName": "1.0.9",
-  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.9/app-release.apk",
-  "releaseNotes": "Version 9: Complete update system with download and install\n\n✅ Fixed automatic update notification\n✅ App checks for updates on startup\n✅ Shows dialog when new version is available\n✅ Download and install APK automatically\n✅ Dark Mode fixes included\n✅ Network availability check"
+  "versionCode": 8,
+  "versionName": "1.0.8",
+  "apkUrl": "https://github.com/TwentyOOO/Update-ExchangeNEW/releases/download/v1.0.8/app-release.apk",
+  "releaseNotes": "Version 8: Complete update system\n\n✅ Automatic update check on startup\n✅ Download and install updates\n✅ Dark Mode fixes\n✅ Network availability check\n✅ Detailed error logging"
 }
