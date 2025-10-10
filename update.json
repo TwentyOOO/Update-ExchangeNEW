@@ -1,7 +1,7 @@
 {
-  "latestVersionCode": 6,
+  "latestVersionCode": 7,
   "apkUrl": "https://raw.githubusercontent.com/TwentyOOO/Update-ExchangeNEW/main/app-release-enhanced-ui.apk",
-  "lastUpdated": "2025-09-21T22:10:00Z",
-  "updateNotes": "تحسينات واجهة المستخدم: أزرار أكثر وضوحاً، ألوان محسّنة، تصميم عصري",
+  "lastUpdated": "2025-10-10T15:15:00Z",
+  "updateNotes": "إضافة Dark Mode: الوضع الفاتح (أبيض) افتراضياً، مع إمكانية التبديل للوضع الداكن عبر زر صغير في الأعلى 🌙☀",
   "isUIUpdate": true
 }
