@@ -961,16 +961,16 @@ public class MainActivity extends Activity {
 
         // ========== زر الإضافة - نمط عصري مع أيقونة ==========
         LinearLayout addButton = createActionButton(
-            "إضافة",
-            "➕",
+            "اضف الرصيد",
+            "+",
             "#4CAF50"  // أخضر
         );
         addButton.setOnClickListener(v -> handleAddOrSubtract(true));
 
         // ========== زر الخصم - نمط عصري مع أيقونة ==========
         LinearLayout subButton = createActionButton(
-            "خصم",
-            "➖",
+            "اخصم الرصيد",
+            "-",
             "#F44336"  // أحمر
         );
         subButton.setOnClickListener(v -> handleAddOrSubtract(false));
@@ -1009,11 +1009,13 @@ public class MainActivity extends Activity {
             buttonLayout.setElevation(2f);
         }
 
-        // ========== الأيقونة (Emoji) ==========
+        // ========== الأيقونة (الرمز) ==========
         TextView emojiView = new TextView(this);
         emojiView.setText(emoji);
-        emojiView.setTextSize(28);  // حجم كبير للـ emoji
+        emojiView.setTextSize(40);  // حجم كبير للرمز + / -
+        emojiView.setTextColor(Color.WHITE);
         emojiView.setGravity(Gravity.CENTER);
+        emojiView.setTypeface(null, Typeface.BOLD);
         emojiView.setLayoutParams(new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1024,7 +1026,7 @@ public class MainActivity extends Activity {
         TextView labelView = new TextView(this);
         labelView.setText(label);
         labelView.setTextColor(Color.WHITE);
-        labelView.setTextSize(14);  // حجم النص
+        labelView.setTextSize(12);  // حجم النص أصغر للنص الطويل
         labelView.setGravity(Gravity.CENTER);
         labelView.setTypeface(null, Typeface.BOLD);
         labelView.setPadding(0, 4, 0, 0);
