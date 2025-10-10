@@ -852,28 +852,131 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout createOldStyleWalletLayout() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(10, 10, 10, 10);
+        // الصف الرئيسي - يحتوي على صندوقين أفقياً
+        LinearLayout walletRow = new LinearLayout(this);
+        walletRow.setOrientation(LinearLayout.HORIZONTAL);
+        walletRow.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        walletRow.setPadding(10, 10, 10, 10);
 
-        LinearLayout aedWalletLayout = new LinearLayout(this);
-        aedWalletLayout.setOrientation(LinearLayout.VERTICAL);
-        aedWalletLayout.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        aedWalletLayout.setPadding(5, 5, 5, 5);
-        aedWalletLayout.addView(createCurrencyIcon(R.drawable.aed_icon));
-        aedWalletLayout.addView(createEditableBalanceView("AED"));
-        layout.addView(aedWalletLayout);
+        // ════════════════════════════════════════════════════════════
+        // 1️⃣ صندوق USDT (أخضر فاتح) - النصف الأيسر
+        // ════════════════════════════════════════════════════════════
+        LinearLayout usdtBox = new LinearLayout(this);
+        usdtBox.setOrientation(LinearLayout.HORIZONTAL);
+        usdtBox.setGravity(Gravity.CENTER);
+        usdtBox.setPadding(15, 25, 15, 25);
 
-        LinearLayout usdtWalletLayout = new LinearLayout(this);
-        usdtWalletLayout.setOrientation(LinearLayout.VERTICAL);
-        usdtWalletLayout.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        usdtWalletLayout.setPadding(5, 5, 5, 5);
-        usdtWalletLayout.addView(createCurrencyIcon(R.drawable.usdt_icon));
-        usdtWalletLayout.addView(createEditableBalanceView("USDT"));
-        layout.addView(usdtWalletLayout);
+        // خلفية خضراء مع زوايا منحنية
+        GradientDrawable usdtBg = new GradientDrawable();
+        usdtBg.setColor(Color.parseColor("#00D9A3"));  // أخضر فاتح/تركواز
+        usdtBg.setCornerRadius(12f);
+        usdtBox.setBackground(usdtBg);
 
-        return layout;
+        // الوزن - نصف العرض
+        LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        usdtParams.setMargins(0, 0, 5, 0);  // مسافة من اليمين
+        usdtBox.setLayoutParams(usdtParams);
+
+        // أيقونة البيتكوين والدولار
+        TextView usdtIcon = new TextView(this);
+        usdtIcon.setText("₿💵 ");
+        usdtIcon.setTextSize(24);
+        usdtBox.addView(usdtIcon);
+
+        // القيمة USDT (قابلة للتعديل)
+        final TextView usdtDisplay = new TextView(this);
+        usdtDisplay.setTextSize(22);
+        usdtDisplay.setTextColor(Color.WHITE);
+        usdtDisplay.setTypeface(null, Typeface.BOLD);
+        usdtDisplay.setGravity(Gravity.CENTER);
+        usdtValue = usdtDisplay;  // حفظ المرجع للتحديث
+        usdtBox.addView(usdtDisplay);
+
+        // جعل الصندوق قابل للنقر للتعديل
+        usdtBox.setOnClickListener(v -> showEditDialog("USDT"));
+
+        walletRow.addView(usdtBox);
+
+        // ════════════════════════════════════════════════════════════
+        // 2️⃣ صندوق AED (أبيض مع أخضر) - النصف الأيمن
+        // ════════════════════════════════════════════════════════════
+        LinearLayout aedBox = new LinearLayout(this);
+        aedBox.setOrientation(LinearLayout.HORIZONTAL);
+        aedBox.setGravity(Gravity.CENTER);
+        aedBox.setPadding(15, 25, 15, 25);
+
+        // خلفية بيضاء مع زوايا منحنية
+        GradientDrawable aedBg = new GradientDrawable();
+        int aedBgColor = uiHelper.isDarkMode() ?
+            Color.parseColor("#2C3E50") :  // داكن في Dark Mode
+            Color.WHITE;                    // أبيض في Light Mode
+        aedBg.setColor(aedBgColor);
+        aedBg.setCornerRadius(12f);
+        aedBox.setBackground(aedBg);
+
+        // الوزن - نصف العرض
+        LinearLayout.LayoutParams aedParams = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        aedParams.setMargins(5, 0, 0, 0);  // مسافة من اليسار
+        aedBox.setLayoutParams(aedParams);
+
+        // أيقونة اليويو والدولار
+        TextView aedIcon = new TextView(this);
+        aedIcon.setText("💰💲 ");
+        aedIcon.setTextSize(24);
+        aedBox.addView(aedIcon);
+
+        // نص "AED:"
+        TextView aedLabel = new TextView(this);
+        aedLabel.setText("AED: ");
+        aedLabel.setTextSize(18);
+        aedLabel.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
+        aedLabel.setTypeface(null, Typeface.BOLD);
+        aedBox.addView(aedLabel);
+
+        // القيمة AED (قابلة للتعديل)
+        final TextView aedDisplay = new TextView(this);
+        aedDisplay.setTextSize(22);
+        aedDisplay.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
+        aedDisplay.setTypeface(null, Typeface.BOLD);
+        aedDisplay.setGravity(Gravity.CENTER);
+        aedValue = aedDisplay;  // حفظ المرجع للتحديث
+        aedBox.addView(aedDisplay);
+
+        // جعل الصندوق قابل للنقر للتعديل
+        aedBox.setOnClickListener(v -> showEditDialog("AED"));
+
+        walletRow.addView(aedBox);
+
+        return walletRow;
+    }
+
+    // دالة مساعدة لإظهار حوار التعديل
+    private void showEditDialog(final String currency) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("تعديل رصيد " + currency);
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setHint("أدخل الرصيد الجديد");
+        String currentValue = preferences.getString(
+            currency.equals("AED") ? "aed_wallet" : "usdt_wallet", "0.0"
+        );
+        input.setText(currentValue);
+        builder.setView(input);
+
+        builder.setPositiveButton("حفظ", (dialog, which) -> {
+            handleWalletManualEdit(currency, input.getText().toString());
+        });
+        builder.setNegativeButton("إلغاء", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     private ImageView createCurrencyIcon(int imageResourceId) {

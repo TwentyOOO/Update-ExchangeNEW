@@ -5,7 +5,8 @@
       "Bash(adb logcat:*)",
       "Bash(timeout 5 adb logcat:*)",
       "Bash(git add:*)",
-      "Read(//c/Users/ucobr/**)"
+      "Read(//c/Users/ucobr/**)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

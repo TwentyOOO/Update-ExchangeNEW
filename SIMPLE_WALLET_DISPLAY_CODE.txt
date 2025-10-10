@@ -1,0 +1,367 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      كود عرض المحفظة البسيط - صف واحد                        ║
+║                    Simple Wallet Display Code - Single Row                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── كود إنشاء صف المحفظة ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createSimpleWalletRow() {
+    // الحاوية الرئيسية - صف أفقي
+    LinearLayout walletRow = new LinearLayout(this);
+    walletRow.setOrientation(LinearLayout.HORIZONTAL);
+    walletRow.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    walletRow.setPadding(10, 10, 10, 10);
+    walletRow.setGravity(Gravity.CENTER_VERTICAL);
+
+    // ────────────────────────────────────────────────────────────────────
+    // 1️⃣ صندوق USDT (أخضر) - النصف الأيسر
+    // ────────────────────────────────────────────────────────────────────
+    LinearLayout usdtBox = new LinearLayout(this);
+    usdtBox.setOrientation(LinearLayout.HORIZONTAL);
+    usdtBox.setGravity(Gravity.CENTER);
+    usdtBox.setPadding(15, 20, 15, 20);
+
+    // خلفية خضراء مع زوايا منحنية
+    GradientDrawable usdtBg = new GradientDrawable();
+    usdtBg.setColor(Color.parseColor("#00D9A3"));  // أخضر فاتح
+    usdtBg.setCornerRadius(12f);
+    usdtBox.setBackground(usdtBg);
+
+    // الوزن والهوامش
+    LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
+        0,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        1.0f  // نصف العرض
+    );
+    usdtParams.setMargins(0, 0, 5, 0);  // مسافة صغيرة من اليمين
+    usdtBox.setLayoutParams(usdtParams);
+
+    // أيقونة البيتكوين 💵
+    TextView usdtIcon = new TextView(this);
+    usdtIcon.setText("₿💵");
+    usdtIcon.setTextSize(24);
+    usdtIcon.setGravity(Gravity.CENTER);
+    usdtBox.addView(usdtIcon);
+
+    // القيمة USDT
+    TextView usdtValue = new TextView(this);
+    usdtValue.setText("5,000.00");
+    usdtValue.setTextSize(22);
+    usdtValue.setTextColor(Color.WHITE);
+    usdtValue.setTypeface(null, Typeface.BOLD);
+    usdtValue.setPadding(8, 0, 0, 0);
+    usdtBox.addView(usdtValue);
+
+    walletRow.addView(usdtBox);
+
+    // ────────────────────────────────────────────────────────────────────
+    // 2️⃣ صندوق YOHO (أبيض مع أخضر) - النصف الأيمن
+    // ────────────────────────────────────────────────────────────────────
+    LinearLayout yohoBox = new LinearLayout(this);
+    yohoBox.setOrientation(LinearLayout.HORIZONTAL);
+    yohoBox.setGravity(Gravity.CENTER);
+    yohoBox.setPadding(15, 20, 15, 20);
+
+    // خلفية بيضاء مع زوايا منحنية
+    GradientDrawable yohoBg = new GradientDrawable();
+    yohoBg.setColor(Color.WHITE);
+    yohoBg.setCornerRadius(12f);
+    yohoBox.setBackground(yohoBg);
+
+    // الوزن والهوامش
+    LinearLayout.LayoutParams yohoParams = new LinearLayout.LayoutParams(
+        0,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        1.0f  // نصف العرض
+    );
+    yohoParams.setMargins(5, 0, 0, 0);  // مسافة صغيرة من اليسار
+    yohoBox.setLayoutParams(yohoParams);
+
+    // أيقونة الدولار 💰
+    TextView yohoIcon = new TextView(this);
+    yohoIcon.setText("💰💲");
+    yohoIcon.setTextSize(24);
+    yohoIcon.setGravity(Gravity.CENTER);
+    yohoBox.addView(yohoIcon);
+
+    // نص YOHO
+    TextView yohoLabel = new TextView(this);
+    yohoLabel.setText("YOHO:");
+    yohoLabel.setTextSize(18);
+    yohoLabel.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
+    yohoLabel.setTypeface(null, Typeface.BOLD);
+    yohoLabel.setPadding(8, 0, 5, 0);
+    yohoBox.addView(yohoLabel);
+
+    // القيمة YOHO
+    TextView yohoValue = new TextView(this);
+    yohoValue.setText("750,000");
+    yohoValue.setTextSize(22);
+    yohoValue.setTextColor(Color.parseColor("#4CAF50"));  // أخضر
+    yohoValue.setTypeface(null, Typeface.BOLD);
+    yohoBox.addView(yohoValue);
+
+    walletRow.addView(yohoBox);
+
+    return walletRow;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── نسخة محسّنة مع TextViews قابلة للتعديل ──
+// ══════════════════════════════════════════════════════════════════════════
+
+// المتغيرات العامة
+private TextView usdtDisplay, yohoDisplay;
+
+private LinearLayout createEditableWalletRow() {
+    // الحاوية الرئيسية
+    LinearLayout walletRow = new LinearLayout(this);
+    walletRow.setOrientation(LinearLayout.HORIZONTAL);
+    walletRow.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    walletRow.setPadding(10, 10, 10, 10);
+
+    // ────── صندوق USDT (أخضر) ──────
+    LinearLayout usdtBox = new LinearLayout(this);
+    usdtBox.setOrientation(LinearLayout.HORIZONTAL);
+    usdtBox.setGravity(Gravity.CENTER);
+    usdtBox.setPadding(15, 20, 15, 20);
+
+    GradientDrawable usdtBg = new GradientDrawable();
+    usdtBg.setColor(Color.parseColor("#00D9A3"));
+    usdtBg.setCornerRadius(12f);
+    usdtBox.setBackground(usdtBg);
+
+    LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+    );
+    usdtParams.setMargins(0, 0, 5, 0);
+    usdtBox.setLayoutParams(usdtParams);
+
+    // أيقونة
+    TextView usdtIcon = new TextView(this);
+    usdtIcon.setText("₿💵");
+    usdtIcon.setTextSize(24);
+    usdtBox.addView(usdtIcon);
+
+    // القيمة (قابلة للتعديل)
+    usdtDisplay = new TextView(this);
+    usdtDisplay.setText("5,000.00");
+    usdtDisplay.setTextSize(22);
+    usdtDisplay.setTextColor(Color.WHITE);
+    usdtDisplay.setTypeface(null, Typeface.BOLD);
+    usdtDisplay.setPadding(8, 0, 0, 0);
+    usdtBox.addView(usdtDisplay);
+
+    walletRow.addView(usdtBox);
+
+    // ────── صندوق YOHO (أبيض) ──────
+    LinearLayout yohoBox = new LinearLayout(this);
+    yohoBox.setOrientation(LinearLayout.HORIZONTAL);
+    yohoBox.setGravity(Gravity.CENTER);
+    yohoBox.setPadding(15, 20, 15, 20);
+
+    GradientDrawable yohoBg = new GradientDrawable();
+    yohoBg.setColor(Color.WHITE);
+    yohoBg.setCornerRadius(12f);
+    yohoBox.setBackground(yohoBg);
+
+    LinearLayout.LayoutParams yohoParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+    );
+    yohoParams.setMargins(5, 0, 0, 0);
+    yohoBox.setLayoutParams(yohoParams);
+
+    // أيقونة
+    TextView yohoIcon = new TextView(this);
+    yohoIcon.setText("💰💲");
+    yohoIcon.setTextSize(24);
+    yohoBox.addView(yohoIcon);
+
+    // نص YOHO
+    TextView yohoLabel = new TextView(this);
+    yohoLabel.setText("YOHO:");
+    yohoLabel.setTextSize(18);
+    yohoLabel.setTextColor(Color.parseColor("#4CAF50"));
+    yohoLabel.setTypeface(null, Typeface.BOLD);
+    yohoLabel.setPadding(8, 0, 5, 0);
+    yohoBox.addView(yohoLabel);
+
+    // القيمة (قابلة للتعديل)
+    yohoDisplay = new TextView(this);
+    yohoDisplay.setText("750,000");
+    yohoDisplay.setTextSize(22);
+    yohoDisplay.setTextColor(Color.parseColor("#4CAF50"));
+    yohoDisplay.setTypeface(null, Typeface.BOLD);
+    yohoBox.addView(yohoDisplay);
+
+    walletRow.addView(yohoBox);
+
+    return walletRow;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── دالة تحديث القيم ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private void updateWalletDisplay(double usdt, double yoho) {
+    if (usdtDisplay != null) {
+        usdtDisplay.setText(String.format(Locale.US, "%,.2f", usdt));
+    }
+    if (yohoDisplay != null) {
+        yohoDisplay.setText(String.format(Locale.US, "%,.0f", yoho));
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── الاستخدام في setupUI() ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private void setupUI() {
+    LinearLayout mainLayout = new LinearLayout(this);
+    mainLayout.setOrientation(LinearLayout.VERTICAL);
+    mainLayout.setBackgroundColor(uiHelper.getBackgroundDark());
+
+    // إضافة صف المحفظة
+    mainLayout.addView(createEditableWalletRow());
+
+    // ... باقي العناصر ...
+
+    setContentView(mainLayout);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── نسخة مع Dark Mode Support ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createDarkModeWalletRow() {
+    LinearLayout walletRow = new LinearLayout(this);
+    walletRow.setOrientation(LinearLayout.HORIZONTAL);
+    walletRow.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    walletRow.setPadding(10, 10, 10, 10);
+
+    // ────── صندوق USDT ──────
+    LinearLayout usdtBox = new LinearLayout(this);
+    usdtBox.setOrientation(LinearLayout.HORIZONTAL);
+    usdtBox.setGravity(Gravity.CENTER);
+    usdtBox.setPadding(15, 20, 15, 20);
+
+    GradientDrawable usdtBg = new GradientDrawable();
+    usdtBg.setColor(Color.parseColor("#00D9A3"));  // أخضر دائماً
+    usdtBg.setCornerRadius(12f);
+    usdtBox.setBackground(usdtBg);
+
+    LinearLayout.LayoutParams usdtParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+    );
+    usdtParams.setMargins(0, 0, 5, 0);
+    usdtBox.setLayoutParams(usdtParams);
+
+    TextView usdtIcon = new TextView(this);
+    usdtIcon.setText("₿💵");
+    usdtIcon.setTextSize(24);
+    usdtBox.addView(usdtIcon);
+
+    usdtDisplay = new TextView(this);
+    usdtDisplay.setText("5,000.00");
+    usdtDisplay.setTextSize(22);
+    usdtDisplay.setTextColor(Color.WHITE);  // أبيض دائماً على الأخضر
+    usdtDisplay.setTypeface(null, Typeface.BOLD);
+    usdtDisplay.setPadding(8, 0, 0, 0);
+    usdtBox.addView(usdtDisplay);
+
+    walletRow.addView(usdtBox);
+
+    // ────── صندوق YOHO (يتغير مع الثيم) ──────
+    LinearLayout yohoBox = new LinearLayout(this);
+    yohoBox.setOrientation(LinearLayout.HORIZONTAL);
+    yohoBox.setGravity(Gravity.CENTER);
+    yohoBox.setPadding(15, 20, 15, 20);
+
+    GradientDrawable yohoBg = new GradientDrawable();
+    // خلفية تتغير حسب الثيم
+    int yohoBgColor = uiHelper.isDarkMode() ?
+        Color.parseColor("#2C3E50") :  // داكن في Dark Mode
+        Color.WHITE;                    // أبيض في Light Mode
+    yohoBg.setColor(yohoBgColor);
+    yohoBg.setCornerRadius(12f);
+    yohoBox.setBackground(yohoBg);
+
+    LinearLayout.LayoutParams yohoParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
+    );
+    yohoParams.setMargins(5, 0, 0, 0);
+    yohoBox.setLayoutParams(yohoParams);
+
+    TextView yohoIcon = new TextView(this);
+    yohoIcon.setText("💰💲");
+    yohoIcon.setTextSize(24);
+    yohoBox.addView(yohoIcon);
+
+    TextView yohoLabel = new TextView(this);
+    yohoLabel.setText("YOHO:");
+    yohoLabel.setTextSize(18);
+    yohoLabel.setTextColor(Color.parseColor("#4CAF50"));  // أخضر دائماً
+    yohoLabel.setTypeface(null, Typeface.BOLD);
+    yohoLabel.setPadding(8, 0, 5, 0);
+    yohoBox.addView(yohoLabel);
+
+    yohoDisplay = new TextView(this);
+    yohoDisplay.setText("750,000");
+    yohoDisplay.setTextSize(22);
+    yohoDisplay.setTextColor(Color.parseColor("#4CAF50"));  // أخضر دائماً
+    yohoDisplay.setTypeface(null, Typeface.BOLD);
+    yohoBox.addView(yohoDisplay);
+
+    walletRow.addView(yohoBox);
+
+    return walletRow;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── ملاحظات مهمة ──
+// ══════════════════════════════════════════════════════════════════════════
+
+/*
+📝 الألوان المستخدمة:
+━━━━━━━━━━━━━━━━━━━
+- صندوق USDT: #00D9A3 (أخضر فاتح/تركواز)
+- نص USDT: أبيض (#FFFFFF)
+- صندوق YOHO: أبيض (#FFFFFF) أو #2C3E50 (داكن في Dark Mode)
+- نص YOHO: #4CAF50 (أخضر)
+
+📐 الأبعاد:
+━━━━━━━━━━━
+- Padding داخلي: 15px أفقي، 20px عمودي
+- Corner radius: 12f
+- المسافة بين الصندوقين: 10px (5px + 5px)
+- Weight: 1.0f لكل صندوق (نصف العرض)
+
+🎨 التخصيص:
+━━━━━━━━━━━━
+- يمكن تغيير حجم النص من setTextSize()
+- يمكن تغيير الألوان من Color.parseColor()
+- يمكن تغيير الأيقونات من setText()
+
+📱 الاستخدام:
+━━━━━━━━━━━━━
+1. استخدم createEditableWalletRow() لواجهة قابلة للتحديث
+2. استخدم updateWalletDisplay(usdt, yoho) لتحديث القيم
+3. استخدم createDarkModeWalletRow() للدعم Dark Mode
+
+✅ النتيجة:
+━━━━━━━━━━━
+صف واحد يحتوي على صندوقين متساويين:
+[  ₿💵 5,000.00  ]  [  💰💲 YOHO: 750,000  ]
+  أخضر/أبيض           أبيض/أخضر
+*/

@@ -1,0 +1,475 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    دليل كامل للواجهة - Version 7 مع Dark Mode                 ║
+║                      Complete UI Guide - Version 7 with Dark Mode              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📋 محتويات الدليل / Contents:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. المتطلبات الأساسية (Requirements)
+2. كود UIHelper الكامل (UIHelper Complete Code)
+3. كود الواجهة الرئيسية (Main UI Code)
+4. ملاحظات التنفيذ (Implementation Notes)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📌 1. المتطلبات الأساسية / Requirements
+═══════════════════════════════════════════════════════════════════════════════
+
+1. إضافة في build.gradle (app):
+   ────────────────────────────────────
+   implementation 'androidx.core:core:1.10.1'
+
+2. إضافة في colors.xml (res/values/colors.xml):
+   ────────────────────────────────────
+   <!-- Light Mode Colors -->
+   <color name="background_light">#FFFFFF</color>
+   <color name="text_on_light">#2C3E50</color>
+   <color name="gray_text">#7F8C8D</color>
+   <color name="gray_light">#F8F9FA</color>
+
+   <!-- Dark Mode Colors -->
+   <color name="background_dark">#1E2A38</color>
+   <color name="background_card">#2C3E50</color>
+   <color name="background_surface">#34495E</color>
+   <color name="text_primary">#ECEFF1</color>
+   <color name="text_secondary">#B0BEC5</color>
+   <color name="text_hint">#607D8B</color>
+
+   <!-- Theme Colors -->
+   <color name="primary_gold">#FFD700</color>
+   <color name="primary_gold_dark">#FFA500</color>
+   <color name="accent_blue">#3498DB</color>
+   <color name="accent_purple">#9B59B6</color>
+
+   <!-- Status Colors -->
+   <color name="success_green">#27AE60</color>
+   <color name="error_red">#E74C3C</color>
+   <color name="warning_orange">#F39C12</color>
+
+3. إضافة في ids.xml (res/values/ids.xml):
+   ────────────────────────────────────
+   <?xml version="1.0" encoding="utf-8"?>
+   <resources>
+       <item name="dark_mode_button_tag" type="id" />
+   </resources>
+
+4. الأيقونات المطلوبة (في res/drawable/):
+   ────────────────────────────────────
+   - ic_analytics.xml
+   - ic_local_shipping.xml
+   - ic_history.xml
+   - ic_restart_alt.xml
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📌 2. كود UIHelper الكامل / UIHelper Complete Code
+═══════════════════════════════════════════════════════════════════════════════
+
+package com.mosaedbarmaja.exchangenew;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import androidx.core.content.ContextCompat;
+
+public class UIHelper {
+
+    private Context context;
+    private boolean isDarkMode;
+    private static final String PREFS_NAME = "GoldExchangeApp";
+    private static final String KEY_DARK_MODE = "dark_mode_enabled";
+
+    public UIHelper(Context context) {
+        this.context = context;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.isDarkMode = prefs.getBoolean(KEY_DARK_MODE, false); // false = Light Mode (default)
+    }
+
+    // --- إدارة Dark Mode ---
+    public boolean isDarkMode() {
+        return isDarkMode;
+    }
+
+    public void setDarkMode(boolean darkMode) {
+        this.isDarkMode = darkMode;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_DARK_MODE, darkMode).apply();
+    }
+
+    public void toggleDarkMode() {
+        setDarkMode(!isDarkMode);
+    }
+
+    // --- ألوان الخلفيات ---
+    public int getBackgroundDark() {
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_dark) :
+            Color.WHITE;
+    }
+
+    public int getBackgroundCard() {
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_card) :
+            ContextCompat.getColor(context, R.color.background_light);
+    }
+
+    public int getBackgroundSurface() {
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.background_surface) :
+            ContextCompat.getColor(context, R.color.gray_light);
+    }
+
+    // --- ألوان النصوص ---
+    public int getTextPrimary() {
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.text_primary) :
+            ContextCompat.getColor(context, R.color.text_on_light);
+    }
+
+    public int getTextSecondary() {
+        return isDarkMode ?
+            ContextCompat.getColor(context, R.color.text_secondary) :
+            ContextCompat.getColor(context, R.color.gray_text);
+    }
+
+    // --- ألوان الثيم ---
+    public int getPrimaryGold() {
+        return ContextCompat.getColor(context, R.color.primary_gold);
+    }
+
+    public int getSuccessGreen() {
+        return ContextCompat.getColor(context, R.color.success_green);
+    }
+
+    public int getErrorRed() {
+        return ContextCompat.getColor(context, R.color.error_red);
+    }
+
+    public int getWarningOrange() {
+        return ContextCompat.getColor(context, R.color.warning_orange);
+    }
+
+    // --- Emoji Methods ---
+    public String getWalletEmoji() { return "🏦"; }
+    public String getYohoEmoji() { return "💰"; }
+    public String getAedEmoji() { return "💵"; }
+    public String getUsdtEmoji() { return "💲"; }
+}
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📌 3. كود الواجهة الرئيسية / Main UI Code
+═══════════════════════════════════════════════════════════════════════════════
+
+// في MainActivity.java
+
+// ── المتغيرات المطلوبة ──
+private UIHelper uiHelper;
+
+// ── في onCreate() ──
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    // تهيئة UIHelper
+    uiHelper = new UIHelper(this);
+
+    setupUI();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── دالة setupUI الرئيسية ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private void setupUI() {
+    LinearLayout mainLayout = new LinearLayout(this);
+    mainLayout.setOrientation(LinearLayout.VERTICAL);
+    mainLayout.setBackgroundColor(uiHelper.getBackgroundDark());
+    mainLayout.setPadding(0, 0, 0, 0);
+
+    mainLayout.addView(createTitleSection());
+    mainLayout.addView(createTopButtonsLayout());
+
+    ScrollView scrollView = new ScrollView(this);
+    LinearLayout contentContainer = new LinearLayout(this);
+    contentContainer.setOrientation(LinearLayout.VERTICAL);
+    contentContainer.setPadding(20, 20, 20, 20);
+
+    // أضف باقي محتويات الواجهة هنا...
+
+    scrollView.addView(contentContainer);
+    mainLayout.addView(scrollView);
+
+    setContentView(mainLayout);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── قسم العنوان ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createTitleSection() {
+    LinearLayout titleSection = new LinearLayout(this);
+    titleSection.setOrientation(LinearLayout.VERTICAL);
+    titleSection.setPadding(0, 30, 0, 30);
+    titleSection.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    titleSection.setBackgroundColor(uiHelper.getBackgroundCard());
+
+    // العنوان الرئيسي
+    TextView title = new TextView(this);
+    title.setText("🏦 حاسبة اليويوهو");
+    title.setTextSize(24);
+    title.setTextColor(uiHelper.getTextPrimary());
+    title.setGravity(Gravity.CENTER);
+    title.setTypeface(null, Typeface.BOLD);
+    titleSection.addView(title);
+
+    // العنوان الفرعي
+    TextView subTitle = new TextView(this);
+    subTitle.setText("درهم إماراتي ⇌ دولار ⇌ يوهو");
+    subTitle.setTextSize(16);
+    subTitle.setTextColor(uiHelper.getTextSecondary());
+    subTitle.setGravity(Gravity.CENTER);
+    subTitle.setPadding(0, 8, 0, 0);
+    titleSection.addView(subTitle);
+
+    return titleSection;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── شريط الأزرار العلوي مع Dark Mode ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createTopButtonsLayout() {
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.HORIZONTAL);
+    layout.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        130  // ارتفاع كافي للنص
+    ));
+    layout.setPadding(8, 4, 8, 4);
+    layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
+
+    // 1️⃣ زر التحليل (0.8)
+    LinearLayout chartBtn = createSimpleIconButton(
+        R.drawable.ic_analytics, "تحليل", "#27AE60"
+    );
+    chartBtn.setOnClickListener(v -> openChartActivity());
+    LinearLayout.LayoutParams chartParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f
+    );
+    chartParams.setMargins(2, 0, 2, 0);
+    chartBtn.setLayoutParams(chartParams);
+
+    // 2️⃣ زر الوكلاء (1.5) - الأكبر
+    LinearLayout agentsBtn = createSimpleIconButton(
+        R.drawable.ic_local_shipping, "وكلاء", "#F39C12"
+    );
+    agentsBtn.setOnClickListener(this::showAgentPopupMenu);
+    LinearLayout.LayoutParams agentsParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f
+    );
+    agentsParams.setMargins(2, 0, 2, 0);
+    agentsBtn.setLayoutParams(agentsParams);
+
+    // 3️⃣ زر السجلات (0.8)
+    LinearLayout recordsBtn = createSimpleIconButton(
+        R.drawable.ic_history, "السجلات", "#3498DB"
+    );
+    recordsBtn.setOnClickListener(v -> openRecordsActivity());
+    LinearLayout.LayoutParams recordsParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.8f
+    );
+    recordsParams.setMargins(2, 0, 2, 0);
+    recordsBtn.setLayoutParams(recordsParams);
+
+    // 4️⃣ زر التصفير (0.6)
+    LinearLayout resetBtn = createSimpleIconButton(
+        R.drawable.ic_restart_alt, "تصفير", "#FF4757"
+    );
+    resetBtn.setOnClickListener(v -> handleReset());
+    LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.6f
+    );
+    resetParams.setMargins(2, 0, 2, 0);
+    resetBtn.setLayoutParams(resetParams);
+
+    // 5️⃣ زر Dark Mode (0.5) - الأصغر ⭐
+    LinearLayout darkModeBtn = createDarkModeButton();
+    darkModeBtn.setOnClickListener(v -> toggleDarkMode());
+    LinearLayout.LayoutParams darkModeParams = new LinearLayout.LayoutParams(
+        0, ViewGroup.LayoutParams.MATCH_PARENT, 0.5f
+    );
+    darkModeParams.setMargins(2, 0, 2, 0);
+    darkModeBtn.setLayoutParams(darkModeParams);
+
+    // إضافة الأزرار
+    layout.addView(chartBtn);
+    layout.addView(agentsBtn);
+    layout.addView(recordsBtn);
+    layout.addView(resetBtn);
+    layout.addView(darkModeBtn);  // ⭐ زر Dark Mode في النهاية
+
+    return layout;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── دالة إنشاء زر أيقونة عادي ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createSimpleIconButton(int iconResId, String label, String bgColor) {
+    LinearLayout buttonLayout = new LinearLayout(this);
+    buttonLayout.setOrientation(LinearLayout.VERTICAL);
+    buttonLayout.setGravity(Gravity.CENTER);
+    buttonLayout.setPadding(6, 8, 6, 8);
+    buttonLayout.setClickable(true);
+    buttonLayout.setFocusable(true);
+
+    // الخلفية
+    GradientDrawable background = new GradientDrawable();
+    background.setColor(Color.parseColor(bgColor));
+    background.setCornerRadius(6f);
+    buttonLayout.setBackground(background);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        buttonLayout.setElevation(2f);
+    }
+
+    // الأيقونة
+    ImageView iconView = new ImageView(this);
+    try {
+        iconView.setImageResource(iconResId);
+    } catch (Exception ignored) {}
+    iconView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+    iconView.setLayoutParams(new LinearLayout.LayoutParams(40, 40));
+    iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    buttonLayout.addView(iconView);
+
+    // النص
+    TextView labelView = new TextView(this);
+    labelView.setText(label);
+    labelView.setTextColor(Color.WHITE);
+    labelView.setTextSize(12);
+    labelView.setGravity(Gravity.CENTER);
+    labelView.setTypeface(null, Typeface.BOLD);
+    labelView.setPadding(0, 3, 0, 0);
+    labelView.setMaxLines(1);
+    labelView.setEllipsize(TextUtils.TruncateAt.END);
+    labelView.setSingleLine(true);
+    labelView.setShadowLayer(1.5f, 0f, 0.5f, Color.parseColor("#30000000"));
+    labelView.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    buttonLayout.addView(labelView);
+
+    return buttonLayout;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── زر Dark Mode الخاص ⭐ ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private LinearLayout createDarkModeButton() {
+    LinearLayout buttonLayout = new LinearLayout(this);
+    buttonLayout.setOrientation(LinearLayout.VERTICAL);
+    buttonLayout.setGravity(Gravity.CENTER);
+    buttonLayout.setPadding(4, 8, 4, 8);
+    buttonLayout.setClickable(true);
+    buttonLayout.setFocusable(true);
+
+    // اللون حسب الوضع: ذهبي في الداكن، رمادي في الفاتح
+    String bgColor = uiHelper.isDarkMode() ? "#FFD700" : "#5D6D7E";
+    GradientDrawable background = new GradientDrawable();
+    background.setColor(Color.parseColor(bgColor));
+    background.setCornerRadius(6f);
+    buttonLayout.setBackground(background);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        buttonLayout.setElevation(2f);
+    }
+
+    // الأيقونة: شمس ☀ في الوضع الداكن، قمر 🌙 في الوضع الفاتح
+    TextView iconView = new TextView(this);
+    iconView.setText(uiHelper.isDarkMode() ? "☀" : "🌙");
+    iconView.setTextSize(20);
+    iconView.setGravity(Gravity.CENTER);
+    iconView.setLayoutParams(new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ));
+    buttonLayout.addView(iconView);
+
+    // نص فارغ (لا نحتاج نص)
+    TextView labelView = new TextView(this);
+    labelView.setText("");
+    labelView.setTextColor(Color.WHITE);
+    labelView.setTextSize(9);
+    labelView.setGravity(Gravity.CENTER);
+    labelView.setPadding(0, 2, 0, 0);
+    buttonLayout.addView(labelView);
+
+    return buttonLayout;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── دالة تبديل Dark Mode ──
+// ══════════════════════════════════════════════════════════════════════════
+
+private void toggleDarkMode() {
+    uiHelper.toggleDarkMode();
+    // إعادة إنشاء Activity لتطبيق الألوان الجديدة
+    recreate();
+}
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📌 4. ملاحظات التنفيذ / Implementation Notes
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ المميزات الرئيسية:
+━━━━━━━━━━━━━━━━━━━━
+1. الوضع الافتراضي: Light Mode (خلفية بيضاء)
+2. زر Dark Mode صغير جداً في نهاية شريط الأزرار
+3. تبديل سلس بين الوضعين مع حفظ التفضيل
+4. ألوان متناسقة في كلا الوضعين
+
+⭐ أحجام الأزرار (weights):
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+- تحليل: 0.8
+- وكلاء: 1.5 (الأكبر)
+- سجلات: 0.8
+- تصفير: 0.6
+- Dark Mode: 0.5 (الأصغر)
+
+🎨 الألوان:
+━━━━━━━━━━━
+Light Mode:
+- خلفية: أبيض (#FFFFFF)
+- نص: داكن (#2C3E50)
+- زر Dark Mode: رمادي (#5D6D7E)
+- أيقونة: قمر 🌙
+
+Dark Mode:
+- خلفية: أزرق داكن (#1E2A38)
+- نص: فاتح (#ECEFF1)
+- زر Dark Mode: ذهبي (#FFD700)
+- أيقونة: شمس ☀
+
+📱 التوافق:
+━━━━━━━━━━━
+- Android 5.0+ (API 21+)
+- يعمل على جميع أحجام الشاشات
+- يحفظ التفضيلات تلقائياً
+
+🔧 التخصيص:
+━━━━━━━━━━━━
+- يمكن تغيير الألوان من colors.xml
+- يمكن تعديل أحجام الأزرار من weights
+- يمكن تغيير الأيقونات
+
+═══════════════════════════════════════════════════════════════════════════════
+                              🎉 انتهى الدليل / End of Guide
+═══════════════════════════════════════════════════════════════════════════════
