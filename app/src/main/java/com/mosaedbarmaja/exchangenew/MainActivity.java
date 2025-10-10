@@ -2549,9 +2549,45 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean isNetworkAvailable() {
+        try {
+            android.net.ConnectivityManager connectivityManager =
+                (android.net.ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            if (connectivityManager != null) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    android.net.Network network = connectivityManager.getActiveNetwork();
+                    if (network == null) return false;
+
+                    android.net.NetworkCapabilities capabilities =
+                        connectivityManager.getNetworkCapabilities(network);
+                    return capabilities != null && (
+                        capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET)
+                    );
+                } else {
+                    android.net.NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                    return networkInfo != null && networkInfo.isConnected();
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            Log.e("UpdateChecker", "Error checking network availability", e);
+            return false;
+        }
+    }
+
     private void checkForUpdate() {
         Log.d("UpdateChecker", "📱 Starting update check...");
         Log.d("UpdateChecker", "🌐 URL: " + UPDATE_JSON_URL);
+
+        // التحقق من الاتصال بالإنترنت
+        if (!isNetworkAvailable()) {
+            Log.w("UpdateChecker", "⚠️ No internet connection available");
+            return;
+        }
+        Log.d("UpdateChecker", "✅ Internet connection available");
 
         new Thread(() -> {
             try {
